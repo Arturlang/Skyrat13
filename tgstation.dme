@@ -3429,6 +3429,7 @@
 #include "modular_skyrat\code\_DEFINES\misc.dm"
 #include "modular_skyrat\code\_DEFINES\status_effects.dm"
 #include "modular_skyrat\code\_DEFINES\traits.dm"
+#include "modular_skyrat\code\_DEFINES\vgcult.dm"
 #include "modular_skyrat\code\_globalvars\lists\maintenance_loot.dm"
 #include "modular_skyrat\code\_globalvars\lists\names.dm"
 #include "modular_skyrat\code\_HELPERS\mobs.dm"

@@ -250,49 +250,49 @@ var/list/all_depts_list = list(
 	// The departement
 	var/victim_job = victim?.mind.assigned_role
 	var/converter_job = converter?.mind.assigned_role
-	for (var/list/L in failure_lines_by_dept)
-		if (victim_job in L)
+	for(var/list/L in failure_lines_by_dept)
+		if(victim_job in L)
 			valid_lines += failure_lines_by_dept[L]
 	// The specific job
 	valid_lines += failure_lines_by_specific_job[victim_job]
 	// The roles he may add
-	if (victim.mind)
+	if(victim.mind)
 		for (var/role in victim.mind.antag_roles)
 			valid_lines += failure_lines_by_specific_role[role]
 	// The race
-	if (ishuman(victim))
+	if(ishuman(victim))
 		var/mob/living/carbon/human/dude = victim
 		valid_lines += failure_lines_by_specific_race[dude.species.type]
 
 	// -- Dynamic context
 	// Cultist count
 	var/cultists = 0
-	for (var/datum/role/R in members)
-		if (R.antag && R.antag.current && !R.antag.current.stat) // If he's alive
+	for(var/datum/role/R in members)
+		if(R.antag && R.antag.current && !R.antag.current.stat) // If he's alive
 			cultists++
 
 	// Not a lot of cultists...
-	if (cultists < 3)
+	if(cultists < 3)
 		valid_lines += failure_lines_few_cultists
 
 	// Or a lot of them !
-	else if (cultists > 10)
+	else if(cultists > 10)
 		valid_lines += failure_lines_numerous_cultists
 
 	// Converter and victim are of the same dept
-	for (var/list/dept in all_depts_list)
+	for(var/list/dept in all_depts_list)
 		if ((victim_job in dept) && (converter_job in dept))
 			valid_lines += failure_lines_same_dept
 	// Act
-	if (veil_thickness >= CULT_ACT_III)
+	if(veil_thickness >= CULT_ACT_III)
 		valid_lines += failure_lines_thin_veil
 
 	if(victim.mind && victim.mind.assigned_role == "Chaplain")
 		var/list/cult_blood_chaplain = list("cult", "narsie", "nar'sie", "narnar", "nar-sie")
 		var/list/cult_clock_chaplain = list("ratvar", "clockwork", "ratvarism")
-		if (religion_name in cult_blood_chaplain)
+		if(religion_name in cult_blood_chaplain)
 			to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>Rejoice, I will give you the ending you desired.</span></span>")
-		else if (religion_name in cult_clock_chaplain)
+		else if(religion_name in cult_clock_chaplain)
 			to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>I will take your body, but when your soul returns to Ratvar, tell him that[pick(\
 				"... he SUCKS!",\
 				" there isn't room enough for the two of us on this plane!",\
@@ -313,42 +313,42 @@ var/list/all_depts_list = list(
 	// The departement
 	var/victim_job = victim?.mind.assigned_role
 	var/converter_job = converter?.mind.assigned_role
-	for (var/list/L in acceptance_lines_by_dept)
-		if (victim_job in L)
+	for(var/list/L in acceptance_lines_by_dept)
+		if(victim_job in L)
 			valid_lines += acceptance_lines_by_dept[L]
 	// The specific job
 	valid_lines += acceptance_lines_by_specific_job[victim_job]
 	// The roles he may add
-	if (victim.mind)
-		for (var/role in victim.mind.antag_roles)
+	if(victim.mind)
+		for(var/role in victim.mind.antag_roles)
 			valid_lines += acceptance_lines_by_specific_role[role]
 	// The race
-	if (ishuman(victim))
+	if(ishuman(victim))
 		var/mob/living/carbon/human/dude = victim
 		valid_lines += acceptance_lines_by_specific_race[dude.species.type]
 
 	// -- Dynamic context
 	// Cultist count
 	var/cultists = 0
-	for (var/datum/role/R in members)
-		if (R.antag && R.antag.current && !R.antag.current.stat) // If he's alive
+	for(var/datum/role/R in members)
+		if(R.antag && R.antag.current && !R.antag.current.stat) // If he's alive
 			cultists++
 
 	// Not a lot of cultists...
-	if (cultists < 3)
+	if(cultists < 3)
 		valid_lines += acceptance_lines_few_cultists
 
 	// Or a lot of them !
-	else if (cultists > 10)
+	else if(cultists > 10)
 		valid_lines += acceptance_lines_numerous_cultists
 
 	// Converter and victim are of the same dept
-	for (var/list/dept in all_depts_list)
-		if ((victim_job in dept) && (converter_job in dept))
+	for(var/list/dept in all_depts_list)
+		if((victim_job in dept) && (converter_job in dept))
 			valid_lines += acceptance_lines_same_dept
 
 	// Act
-	if (veil_thickness >= CULT_ACT_III)
+	if(veil_thickness >= CULT_ACT_III)
 		valid_lines += acceptance_lines_thin_veil
 
 	var/chosen_line = pickweight(valid_lines)

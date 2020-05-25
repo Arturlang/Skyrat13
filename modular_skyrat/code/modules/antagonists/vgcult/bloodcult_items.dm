@@ -1245,8 +1245,7 @@ var/list/arcane_tomes = list()
 	desc = "An obsidian cup in the shape of a skull. Used by the followers of Nar-Sie to collect the blood of their sacrifices."
 	icon_state = "cult"
 	item_state = "cult"
-	isGlass = FALSE
-	amount_per_transfer_from_this = 10
+	gulp_size = 10
 	volume = 60
 	force = 5
 	throwforce = 7
@@ -1258,7 +1257,8 @@ var/list/arcane_tomes = list()
 			to_chat(user, "<span class='info'>Drinking blood from this cup will always safely replenish the vessels of cultists, regardless of blood type. It's a shame you're a robot.</span>")
 		else
 			to_chat(user, "<span class='info'>Drinking blood from this cup will always safely replenish your own vessels, regardless of blood types. The opposite is true to non-cultists. Throwing this cup at them may force them to swallow some of its content if their face isn't covered.</span>")
-	else if(get_blood(reagents))
+	var/mob/living/carbon/human/H = user
+	else if(!(NOBLOOD in H.dna.species.species_traits))
 		to_chat(user, "<span class='sinister'>Its contents look delicious though. Surely a sip won't hurt...</span>")
 
 /obj/item/weapon/reagent_containers/food/drinks/cult/on_reagent_change()
@@ -1267,18 +1267,17 @@ var/list/arcane_tomes = list()
 	if(reagents.reagent_list.len > 0)
 		var/image/filling = image('icons/obj/reagentfillings.dmi', src, "cult")
 		filling.icon += mix_color_from_reagents(reagents.reagent_list)
-		filling.alpha = mix_alpha_from_reagents(reagents.reagent_list)
 		overlays += filling
 
 /obj/item/weapon/reagent_containers/food/drinks/cult/throw_impact(var/atom/hit_atom)
 	if(reagents.total_volume)
 		if(ishuman(hit_atom))
 			var/mob/living/carbon/human/H = hit_atom
-			if(!(H.species.chem_flags & NO_DRINK) && !(H.get_body_part_coverage(MOUTH)))
+			if(!H.is_mouth_covered() && )
 				H.visible_message("<span class='warning'>Some of \the [src]'s content spills into \the [H]'s mouth.</span>","<span class='danger'>Some of \the [src]'s content spills into your mouth.</span>")
 				reagents.reaction(H, INGEST)
 				reagents.trans_to(H, gulp_size)
-	transfer(get_turf(hit_atom), null, splashable_units = -1)
+	chem_splash(get_turf(hit_atom), 2, src.reagents)
 
 /obj/item/weapon/reagent_containers/food/drinks/cult/gamer
 	name = "gamer goblet"
@@ -1296,7 +1295,7 @@ var/list/arcane_tomes = list()
 	item_state = "tesseract"
 	throwforce = 2
 	w_class = WEIGHT_CLASS_TINY
-	layer = ABOVE_DOOR_LAYER
+	layer = HIGH_OBJ_LAYER
 
 	var/discarded_types = list(
 		/obj/item/clothing/head/culthood,
@@ -1323,7 +1322,7 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/blood_tesseract/throw_impact(atom/hit_atom)
 	var/turf/T = get_turf(src)
 	playsound(T, 'sound/effects/hit_on_shattered_glass.ogg', 70, TRUE)
-	anim(target = T, a_icon = 'icons/effects/effects.dmi', flick_anim = "tesseract_break", lay = NARSIE_GLOW, plane = LIGHTING_PLANE)
+	animate(target = T, a_icon = 'icons/effects/effects.dmi', flick_anim = "tesseract_break", lay = NARSIE_GLOW, plane = LIGHTING_PLANE)
 	qdel(src)
 
 /obj/item/weapon/blood_tesseract/examine(var/mob/user)
@@ -1334,24 +1333,22 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/blood_tesseract/attack_self(var/mob/living/user)
 	if(isvgcultist(user))
 		//Alright so we'll discard cult gear and equip the stuff stored inside.
-		anim(target = user, a_icon = 'icons/effects/64x64.dmi', flick_anim = "rune_tesseract", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE/2, offY = -WORLD_ICON_SIZE/2, plane = LIGHTING_PLANE)
-		user.u_equip(src)
+		animate(target = user, a_icon = 'icons/effects/64x64.dmi', flick_anim = "rune_tesseract", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE/2, offY = -WORLD_ICON_SIZE/2, plane = LIGHTING_PLANE)
+		user.doUnEquip(src)
 		if(remaining)
 			remaining.forceMove(get_turf(user))
 			user.put_in_hands(remaining)
 			remaining = null
-
 		for(var/obj/item/I in user)
-			if (is_type_in_list(I, discarded_types))
-				user.u_equip(I)
+			if(is_type_in_list(I, discarded_types))
+				user.doUnEquip(I)
 				qdel(I)
-
 		for(var/slot in stored_gear)
 			var/nslot = text2num(slot)
 			var/obj/item/stored_slot = stored_gear[slot]
 			var/obj/item/user_slot = user.get_item_by_slot(nslot)
 			if(!user_slot)
-				user.equip_to_slot_or_drop(stored_slot,nslot)
+				user.equip_to_slot_if_possible(stored_slot, nslot, bypass_equip_delay_self = TRUE)
 			else
 				if(istype(user_slot, /obj/item/weapon/storage))
 					var/obj/item/weapon/storage/S = user_slot
@@ -1361,19 +1358,21 @@ var/list/arcane_tomes = list()
 						//swapping backpacks
 						for(var/obj/item/I in user_slot)
 							I.forceMove(stored_slot)
-						user.u_equip(user_slot)
+						user.doUnEquip(user_slot)
 						qdel(user_slot)
-						user.equip_to_slot_or_drop(stored_slot,nslot)
+						if(user.equip_to_slot_if_possible(stored_slot, nslot, bypass_equip_delay_self = TRUE))
+							nslot.drop_location()
 					else
 						//free backpack
 						var/obj/item/weapon/storage/backpack/B = new(user)
 						for(var/obj/item/I in user_slot)
 							I.forceMove(B)
-						user.u_equip(user_slot)
+						user.doUnEquip(user_slot)
 						qdel(user_slot)
-						user.equip_to_slot_or_drop(B,nslot)
+						if(!user.equip_to_slot_if_possible(B, nslot, bypass_equip_delay_self = TRUE))
+							nslot.drop_location()
 						user.put_in_hands(stored_slot)
 				else
-					user.equip_to_slot_or_drop(stored_slot,nslot)
+					user.equip_to_slot_if_possible(stored_slot, nslot, bypass_equip_delay_self = TRUE)
 			stored_gear.Remove(slot)
 		qdel(src)
