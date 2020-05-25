@@ -124,7 +124,7 @@
 		takeDamage(user.get_unarmed_damage(src))
 		if (sound_damaged)
 			playsound(get_turf(src), sound_damaged, 75, 1)
-	else if(iscultist(user))
+	else if(isvgcultist(user))
 		cultist_act(user)
 	else
 		noncultist_act(user)
@@ -652,7 +652,7 @@
 			if (O.replace_target(user))
 				for(var/datum/role/cultist/C in cult.members)
 					var/mob/M = C.antag.current
-					if (M && iscultist(M))
+					if (M && isvgcultist(M))
 						to_chat(M,"<b>A new target has been assigned. [O.explanation_text]</b>")
 						if (M == O.sacrifice_target)
 							to_chat(M,"<b>There is no greater honor than purposefuly relinquishing your body for the coming of Nar-Sie.</b>")
@@ -660,7 +660,7 @@
 			else
 				for(var/datum/role/cultist/C in cult.members)
 					var/mob/M = C.antag.current
-					if (M && iscultist(M))
+					if (M && isvgcultist(M))
 						to_chat(M,"<b>There are no elligible targets aboard the station, how did you guys even manage that one?</b>")//if there's literally no humans aboard the station
 						to_chat(M,"<b>There needs to be humans aboard the station, cultist or not, for a target to be selected.</b>")
 
@@ -695,7 +695,7 @@
 /obj/structure/cult/altar/Topic(href, href_list)
 	if(href_list["signup"])
 		var/mob/M = usr
-		if(!isobserver(M) || !iscultist(M))
+		if(!isobserver(M) || !isvgcultist(M))
 			return
 		var/mob/dead/observer/O = M
 		var/obj/item/weapon/melee/soulblade/blade = locate() in src
@@ -758,7 +758,7 @@
 			blade.update_icon()
 			blade = null
 
-			if (!iscultist(new_shade))
+			if (!isvgcultist(new_shade))
 				var/datum/role/cultist/newCultist = new
 				newCultist.AssignToRole(new_shade.mind,1)
 				var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
@@ -1571,7 +1571,7 @@ var/list/bloodstone_list = list()
 /obj/structure/cult/bloodstone/dance_start()
 	while(!gcDestroyed && loc && anchor)
 		for (var/mob/M in contributors)
-			if (!iscultist(M) || get_dist(src,M) > 1 || (M.stat != CONSCIOUS))
+			if (!isvgcultist(M) || get_dist(src,M) > 1 || (M.stat != CONSCIOUS))
 				if (M.client)
 					M.client.images -= progbar
 				contributors.Remove(M)
@@ -1639,7 +1639,7 @@ var/list/bloodstone_list = list()
 /obj/structure/cult/proc/dance_start()
 	while(timeleft > 0)
 		for (var/mob/M in contributors)
-			if (!iscultist(M) || get_dist(src,M) > 1 || (M.stat != CONSCIOUS))
+			if (!isvgcultist(M) || get_dist(src,M) > 1 || (M.stat != CONSCIOUS))
 				if (M.client)
 					M.client.images -= progbar
 				contributors.Remove(M)

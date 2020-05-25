@@ -3426,6 +3426,7 @@
 #include "modular_skyrat\code\_DEFINES\admin.dm"
 #include "modular_skyrat\code\_DEFINES\DNA.dm"
 #include "modular_skyrat\code\_DEFINES\machines.dm"
+#include "modular_skyrat\code\_DEFINES\misc.dm"
 #include "modular_skyrat\code\_DEFINES\status_effects.dm"
 #include "modular_skyrat\code\_DEFINES\traits.dm"
 #include "modular_skyrat\code\_globalvars\lists\maintenance_loot.dm"

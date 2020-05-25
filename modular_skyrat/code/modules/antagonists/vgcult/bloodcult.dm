@@ -141,7 +141,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 								to_chat(M,"<span class='danger'>The sacrifice wasn't performed in time.</span><b> A new target has been assigned. [O.explanation_text]</b>")
 								if (M == O.sacrifice_target)
 									to_chat(M,"<b>There is no greater honor than purposefuly relinquishing your body for the coming of Nar-Sie, but you may wait for another target to be selected should you be afraid of death.</b>")
-								else if (iscultist(O.sacrifice_target))
+								else if (isvgcultist(O.sacrifice_target))
 									to_chat(M,"<b>Chance has rolled its dice, and one of ours was selected. If for whatever reasons you do not want to take their life, you will have to wait for a new selection.</b>")
 	if (target_change)
 		target_change = FALSE
@@ -222,7 +222,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 		AppendObjective(new_obj)
 		for(var/datum/role/cultist/C in members)
 			var/mob/M = C.antag.current
-			if (M && iscultist(M))
+			if (M && isvgcultist(M))
 				to_chat(M,"<span class='danger'>[new_obj.name]</span><b>: [new_obj.explanation_text]</b>")
 				//ACT 1
 				if (istype(new_obj,/datum/objective/bloodcult_followers))
@@ -278,7 +278,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 /datum/faction/bloodcult/proc/minor_victory()
 	for(var/datum/role/cultist/C in members)
 		var/mob/M = C.antag.current
-		if (M && iscultist(M))
+		if (M && isvgcultist(M))
 			to_chat(M,"<span class='sinister'>While the sacrifice was correctly completed, we were not fast enough to prevent our ennemies from fleeing.</span>")
 			to_chat(M, "<span class='sinister'>This changes nothing. We will find another way.</span>")
 			for (var/datum/objective/O in objective_holder.objectives)
@@ -557,7 +557,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	var/communion_data = null
 	var/total_accumulated = 0
 	var/total_needed = amount_needed
-	if (!tribute && iscultist(user))
+	if (!tribute && isvgcultist(user))
 		var/datum/role/cultist/mycultist = user.mind.GetRole(CULTIST)
 		if (mycultist in blood_communion)
 			communion = 1
@@ -861,7 +861,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 		if (issilicon(L)||isborer(L))
 			continue
 		if (L.stat != DEAD)
-			if (iscultist(L))
+			if (isvgcultist(L))
 				living_cultists++
 			else
 				living_noncultists++

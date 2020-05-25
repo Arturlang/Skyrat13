@@ -144,7 +144,7 @@ var/list/arcane_tomes = list()
 	if(!istype(M))
 		return
 
-	if(iscultist(M))//don't want to harm our team mates using tomes
+	if(isvgcultist(M))//don't want to harm our team mates using tomes
 		return
 
 	..()
@@ -152,7 +152,7 @@ var/list/arcane_tomes = list()
 	to_chat(M, "<span class='warning'>You feel a searing heat inside of you!</span>")
 
 /obj/item/weapon/tome/attack_hand(var/mob/living/user)
-	if(!iscultist(user) && state == TOME_OPEN)
+	if(!isvgcultist(user) && state == TOME_OPEN)
 		user.take_organ_damage(0,10)
 		to_chat(user, "<span class='warning'>As you reach to pick up \the [src], you feel a searing heat inside of you!</span>")
 		playsound(loc, 'sound/effects/sparks2.ogg', 50, 1, 0,0,0)
@@ -169,7 +169,7 @@ var/list/arcane_tomes = list()
 	..()
 
 /obj/item/weapon/tome/pickup(var/mob/user)
-	if(iscultist(user) && state == TOME_OPEN)
+	if(isvgcultist(user) && state == TOME_OPEN)
 		usr << browse_rsc('icons/tomebg.png', "tomebg.png")
 		usr << browse(tome_text(), "window=arcanetome;size=537x375")
 
@@ -177,7 +177,7 @@ var/list/arcane_tomes = list()
 	usr << browse(null, "window=arcanetome")
 
 /obj/item/weapon/tome/attack_self(var/mob/living/user)
-	if(!iscultist(user))//Too dumb to live.
+	if(!isvgcultist(user))//Too dumb to live.
 		user.take_organ_damage(0,10)
 		to_chat(user, "<span class='warning'>You try to peek inside \the [src], only to feel a discharge of energy and a searing heat inside of you!</span>")
 		playsound(loc, 'sound/effects/sparks2.ogg', 50, 1, 0,0,0)
@@ -324,7 +324,7 @@ var/list/arcane_tomes = list()
 
 	var/datum/rune_spell/blood_cult/instance = spell_type
 
-	if (iscultist(user) || isobserver(user))
+	if (isvgcultist(user) || isobserver(user))
 		if (attuned_rune)
 			to_chat(user, "<span class='info'>This one was attuned to a <b>[initial(instance.name)]</b> rune. [initial(instance.desc_talisman)]</span>")
 		else
@@ -342,11 +342,11 @@ var/list/arcane_tomes = list()
 		onclose(user, "[name]")
 		return
 
-	if (iscultist(user))
+	if (isvgcultist(user))
 		trigger(user)
 
 /obj/item/weapon/talisman/attack(var/mob/living/target, var/mob/living/user)
-	if(iscultist(user) && spell_type)
+	if(isvgcultist(user) && spell_type)
 		var/datum/rune_spell/blood_cult/instance = spell_type
 		if (initial(instance.touch_cast))
 			new spell_type(user, src, "touch", target)
@@ -512,7 +512,7 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/melee/cultblade/attack(var/mob/living/target, var/mob/living/carbon/human/user)
 	if(!checkcult)
 		return ..()
-	if (iscultist(user))
+	if (isvgcultist(user))
 		if (ishuman(target) && target.resting)
 			var/obj/structure/cult/altar/altar = locate() in target.loc
 			if (altar)
@@ -530,7 +530,7 @@ var/list/arcane_tomes = list()
 			user.UpdateDamageIcon()
 
 /obj/item/weapon/melee/cultblade/pickup(var/mob/living/user)
-	if(checkcult && !iscultist(user))
+	if(checkcult && !isvgcultist(user))
 		to_chat(user, "<span class='warning'>An overwhelming feeling of dread comes over you as you pick up \the [src]. It would be wise to rid yourself of this, quickly.</span>")
 		user.Dizzy(120)
 
@@ -635,7 +635,7 @@ var/list/arcane_tomes = list()
 
 /obj/item/weapon/melee/soulblade/examine(var/mob/user)
 	..()
-	if (iscultist(user))
+	if (isvgcultist(user))
 		to_chat(user, "<span class='info'>blade blood: [blood]%</span>")
 		to_chat(user, "<span class='info'>blade health: [round((health/maxHealth)*100)]%</span>")
 
@@ -650,7 +650,7 @@ var/list/arcane_tomes = list()
 		list("Remove Gem", "radial_removegem", "Remove the soul gem from the blade."),
 		)
 
-	if (!iscultist(user))
+	if (!isvgcultist(user))
 		choices = list(
 			list("Remove Gem", "radial_removegem", "Remove the soul gem from \the [src]."),
 			)
@@ -687,7 +687,7 @@ var/list/arcane_tomes = list()
 
 
 /obj/item/weapon/melee/soulblade/attack(var/mob/living/target, var/mob/living/carbon/human/user)
-	if(!iscultist(user))
+	if(!isvgcultist(user))
 		user.Paralyse(5)
 		to_chat(user, "<span class='warning'>An unexplicable force powerfully repels \the [src] from \the [target]!</span>")
 		var/datum/organ/external/affecting = user.get_active_hand_organ()
@@ -758,7 +758,7 @@ var/list/arcane_tomes = list()
 
 
 /obj/item/weapon/melee/soulblade/pickup(var/mob/living/user)
-	if(!iscultist(user))
+	if(!isvgcultist(user))
 		to_chat(user, "<span class='warning'>An overwhelming feeling of dread comes over you as you pick up \the [src]. It would be wise to rid yourself of this, quickly.</span>")
 		user.Dizzy(120)
 
@@ -911,7 +911,7 @@ var/list/arcane_tomes = list()
 	..()
 
 /obj/item/weapon/melee/blood_dagger/attack_self(var/mob/user)
-	if (ishuman(user) && iscultist(user))
+	if (ishuman(user) && isvgcultist(user))
 		var/mob/living/carbon/human/H = user
 		var/datum/reagent/blood/B = get_blood(H.vessel)
 		if (B && !(H.species.flags & NO_BLOOD))
@@ -1247,7 +1247,7 @@ var/list/arcane_tomes = list()
 
 /obj/item/weapon/reagent_containers/food/drinks/cult/examine(var/mob/user)
 	..()
-	if (iscultist(user))
+	if (isvgcultist(user))
 		if(issilicon(user))
 			to_chat(user, "<span class='info'>Drinking blood from this cup will always safely replenish the vessels of cultists, regardless of blood type. It's a shame you're a robot.</span>")
 		else
@@ -1322,11 +1322,11 @@ var/list/arcane_tomes = list()
 
 /obj/item/weapon/blood_tesseract/examine(var/mob/user)
 	..()
-	if (iscultist(user))
+	if (isvgcultist(user))
 		to_chat(user, "<span class='info'>Press it in your hands to discard currently equiped cult clothing and re-equip your stored items.</span>")
 
 /obj/item/weapon/blood_tesseract/attack_self(var/mob/living/user)
-	if (iscultist(user))
+	if (isvgcultist(user))
 		//Alright so we'll discard cult gear and equip the stuff stored inside.
 		anim(target = user, a_icon = 'icons/effects/64x64.dmi', flick_anim = "rune_tesseract", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE/2, offY = -WORLD_ICON_SIZE/2, plane = LIGHTING_PLANE)
 		user.u_equip(src)

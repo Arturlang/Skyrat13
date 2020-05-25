@@ -41,7 +41,7 @@
 			qdel(src)
 
 /obj/effect/cult_shortcut/attack_hand(var/mob/living/user)
-	if (!iscultist(user))
+	if (!isvgcultist(user))
 		to_chat(user, "<span class='warning'>The markings on this wall are peculiar. You don't feel comfortable staring at them.</span>")
 		return
 	var/turf/T = get_turf(user)
@@ -447,7 +447,7 @@ var/bloodstone_backup = 0
 	current_dots++//so we get integers from 1 to 6
 
 	for (var/mob/M in player_list)
-		if (iscultist(M) && M.client)
+		if (isvgcultist(M) && M.client)
 			viewers += M.client
 
 	indicator = image(icon='icons/obj/cult.dmi',loc=victim,icon_state="",layer=SNOW_OVERLAY_LAYER)

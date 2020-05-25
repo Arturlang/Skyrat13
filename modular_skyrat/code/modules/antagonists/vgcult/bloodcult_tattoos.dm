@@ -13,7 +13,7 @@
 /mob/proc/checkTattoo(var/tattoo_name)
 	if (!tattoo_name)
 		return
-	if (!iscultist(src))
+	if (!isvgcultist(src))
 		return
 	var/datum/role/cultist/C = mind.GetRole(CULTIST)
 	for (var/tattoo in C.tattoos)
@@ -37,7 +37,7 @@ var/list/blood_communion = list()
 
 /datum/cult_tattoo/bloodpool/getTattoo(var/mob/M)
 	..()
-	if (iscultist(M))
+	if (isvgcultist(M))
 		blood_communion.Add(M.mind.GetRole(CULTIST))
 
 /datum/cult_tattoo/silent

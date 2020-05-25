@@ -1,17 +1,17 @@
 #define CULT_SCALING_COEFFICIENT 9.3 //Roughly one new cultist at roundstart per this many players
 
-/proc/iscultist(mob/living/M, require_full_power = FALSE, holy_water_check = FALSE)
+/proc/isvgcultist(mob/living/M, require_full_power = FALSE, holy_water_check = FALSE)
 	if(!istype(M))
 		return FALSE
 	var/datum/antagonist/cult/D = M?.mind?.has_antag_datum(/datum/antagonist/cult)
 	return D && (!require_full_power || !D.neutered) && (!holy_water_check || !D.ignore_holy_water)
-
+/*
 /datum/team/cult/proc/is_sacrifice_target(datum/mind/mind)
 	for(var/datum/objective/sacrifice/sac_objective in objectives)
 		if(mind == sac_objective.target)
 			return TRUE
 	return FALSE
-
+*/
 /proc/is_convertable_to_cult(mob/living/M,datum/team/cult/specific_cult)
 	if(!istype(M))
 		return FALSE
@@ -20,7 +20,7 @@
 			return FALSE
 		if(specific_cult && specific_cult.is_sacrifice_target(M.mind))
 			return FALSE
-		if(M.mind.enslaved_to && !iscultist(M.mind.enslaved_to))
+		if(M.mind.enslaved_to && !isvgcultist(M.mind.enslaved_to))
 			return FALSE
 		if(M.mind.unconvertable)
 			return FALSE
@@ -121,16 +121,6 @@
 			cult_mind.current.Unconscious(100)
 		return TRUE
 
-/datum/game_mode/proc/update_cult_icons_added(datum/mind/cult_mind)
-	var/datum/atom_hud/antag/culthud = GLOB.huds[ANTAG_HUD_CULT]
-	culthud.join_hud(cult_mind.current)
-	set_antag_hud(cult_mind.current, "cult")
-
-/datum/game_mode/proc/update_cult_icons_removed(datum/mind/cult_mind)
-	var/datum/atom_hud/antag/culthud = GLOB.huds[ANTAG_HUD_CULT]
-	culthud.leave_hud(cult_mind.current)
-	set_antag_hud(cult_mind.current, null)
-
 /datum/game_mode/vgcult/proc/check_cult_victory()
 	return main_cult.check_cult_victory()
 
@@ -162,6 +152,7 @@
 			the cult of Nar'Sie. If evidence of this cult is discovered aboard your station, extreme caution and extreme vigilance must be taken going forward, and all resources should be \
 			devoted to stopping this cult. Note that holy water seems to weaken and eventually return the minds of cultists that ingest it, and mindshield implants will prevent conversion \
 			altogether."
+
 // SKYRAT EDIT: Credits
 /datum/game_mode/vgcult/generate_credit_text()
 	var/list/round_credits = list()

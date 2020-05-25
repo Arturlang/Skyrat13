@@ -12,10 +12,11 @@
 	pixel_x = -16 * PIXEL_MULTIPLIER
 	pixel_y = -10 * PIXEL_MULTIPLIER
 	damage = 30//Only affects obj/turf. Mobs take a regular hit from the sword.
-	phase_type = PROJREACT_MOBS
-	penetration = -1
+	dismemberment = 0 //It goes through you cleanly.
+	movement_type = FLYING | UNSTOPPABLE
 	fire_sound = null
-	mouse_opacity = 1
+	mouse_opacity = TRUE
+	candink = FALSE
 	var/turf/secondary_target = null
 	var/obj/item/weapon/melee/soulblade/blade = null
 	var/mob/living/simple_animal/shade/shade = null
@@ -25,18 +26,18 @@
 
 /obj/item/projectile/soulbullet/Destroy()
 	var/turf/T = get_turf(src)
-	if (T)
-		if (blade)
+	if(T)
+		if(blade)
 			blade.forceMove(T)
 	blade = null
 	shade = null
 	..()
 
-/obj/item/projectile/soulbullet/OnFired(var/proj_target = original)
+/obj/item/projectile/soulbullet/fire(var/proj_target = original)
 	target = get_turf(proj_target)
-	if (!secondary_target)
+	if(!secondary_target)
 		secondary_target = target
-	if (!shade)
+	if(!shade)
 		icon_state = "soulbullet-empty"
 	dist_x = abs(target.x - starting.x)
 	dist_y = abs(target.y - starting.y)
@@ -44,11 +45,11 @@
 	override_starting_Y = starting.y
 	override_target_X = target.x
 	override_target_Y = target.y
-	if (target.x > starting.x)
+	if(target.x > starting.x)
 		dx = EAST
 	else
 		dx = WEST
-	if (target.y > starting.y)
+	if(target.y > starting.y)
 		dy = NORTH
 	else
 		dy = SOUTH
@@ -56,18 +57,18 @@
 		error = dist_x/2 - dist_y
 	else
 		error = dist_y/2 - dist_x
-	if (target!=secondary_target)
-		target_angle = round(Get_Angle(target,secondary_target))
-		blade.dir = get_dir(target,secondary_target)
+	if(target != secondary_target)
+		target_angle = round(Get_Angle(target, secondary_target))
+		blade.dir = get_dir(target, secondary_target)
 	else
-		target_angle = round(Get_Angle(starting,target))
-		blade.dir = get_dir(starting,target)
-	shadow_matrix = turn(matrix(),target_angle+45)
+		target_angle = round(Get_Angle(starting, target))
+		blade.dir = get_dir(starting, target)
+	shadow_matrix = turn(matrix(), target_angle + 45)
 	transform = shadow_matrix
 	//var/matrix/base_matrix = turn(matrix(),target_angle)
 	//var/image/I = image('icons/obj/cult_64x64.dmi',"[icon_state]_spin")
 	//I.transform = base_matrix
-	if (shade)
+	if(shade)
 		icon_state = "soulbullet_spin"
 		plane = HUD_PLANE
 		layer = ABOVE_HUD_LAYER
@@ -82,50 +83,51 @@
 			bullet_master["[icon_state]_angle[target_angle]"] = I
 		src.icon = bullet_master["[icon_state]_angle[target_angle]"]
 		*/
-		if (shade)
+		if(shade)
 			icon_state = "soulbullet"
 		else
 			icon_state = "soulbullet-empty"
-	return 1
+	return TRUE
 
 /obj/item/projectile/soulbullet/bresenham_step(var/distA, var/distB, var/dA, var/dB)
-	if (shade && leave_shadows >= 0)
+	if(shade && leave_shadows >= 0)
 		leave_shadows++
-		if ((leave_shadows%3)==0)
+		if((leave_shadows % 3) == 0)
 			anim(target = loc, a_icon = 'icons/obj/cult_64x64.dmi', flick_anim = "soulblade-shadow", lay = NARSIE_GLOW, offX = pixel_x, offY = pixel_y, plane = LIGHTING_PLANE, trans = shadow_matrix)
 	if(..())
 		return 2
 	else
 		return 0
 
-/obj/item/projectile/soulbullet/to_bump(var/atom/A)
-	if (shade)
-		if (ismob(A))
+/obj/item/projectile/soulbullet/on_hit(atom/A)
+	if(shade)
+		if(ismob(A))
 			var/mob/M = A
-			if (!iscultist(M))
-				A.attackby(blade,shade)
-			else if (!M.get_active_hand())//cultists can catch the blade on the fly
+			if(!isvgcultist(M))
+				A.attackby(blade, shade)
+			var/mob/living/carbon/C = A
+			else if(!put_in_active_hand(C))//cultists can catch the blade on the fly
 				blade.forceMove(loc)
 				blade.attack_hand(M)
 				blade = null
 				qdel(src)
 		else
-			A.attackby(blade,shade)
+			A.attackby(blade, shade)
 	else
-		if (ismob(A))
+		if(ismob(A))
 			var/mob/M = A
-			if (!iscultist(M))
+			if(!isvgcultist(M))
 				A.hitby(blade)
 		else
 			A.hitby(blade)
 	if(isliving(A))
-		forceMove(get_step(loc,dir))
+		forceMove(get_step(loc, dir))
 		bump_original_check()
 	else
 		..()
 
 /obj/item/projectile/soulbullet/bump_original_check()
-	if (loc == target && !redirected)
+	if(loc == target && !redirected)
 		redirect()
 
 /obj/item/projectile/soulbullet/reset()
@@ -134,9 +136,9 @@
 
 
 /obj/item/projectile/soulbullet/proc/redirect()
-	redirected = 1
-	projectile_speed = 0.66
-	if (target == secondary_target)
+	redirected = TRUE
+	speed = 0.66
+	if(target == secondary_target)
 		return
 	starting = target
 	target = secondary_target
@@ -146,11 +148,11 @@
 	override_starting_Y = starting.y
 	override_target_X = target.x
 	override_target_Y = target.y
-	if (target.x > starting.x)
+	if(target.x > starting.x)
 		dx = EAST
 	else
 		dx = WEST
-	if (target.y > starting.y)
+	if(target.y > starting.y)
 		dy = NORTH
 	else
 		dy = SOUTH
@@ -162,23 +164,22 @@
 /obj/item/projectile/soulbullet/cultify()
 	return
 
-
 /obj/item/projectile/soulbullet/Cross(var/atom/movable/mover, var/turf/target, var/height=1.5, var/air_group = 0)
 	if(istype(mover, /obj/item/projectile))
-		if (prob(30))//less likely to be hit when perforating
-			return 0
+		if(prob(30))//less likely to be hit when perforating
+			return FALSE
 	return ..()
 
 /obj/item/projectile/soulbullet/attackby(var/obj/item/I, var/mob/user)
 	if (blade)
 		return blade.attackby(I,user)
 
-/obj/item/projectile/soulbullet/hitby(var/atom/movable/AM)
-	if (blade)
+/obj/item/projectile/soulbullet/hitby(atom/movable/AM, skipcatch, hitpush, blocked, datum/thrownthing/throwingdatum)
+	if(blade)
 		return blade.hitby(AM)
 
 /obj/item/projectile/soulbullet/bullet_act(var/obj/item/projectile/P)
-	if (blade)
+	if(blade)
 		return blade.bullet_act(P)
 
 //////////////////////////////
@@ -186,7 +187,6 @@
 //        BLOOD SLASH       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                          //Used when a cultist swings a soul blade that has at least 5 blood in it.
 //////////////////////////////
-
 /obj/item/projectile/bloodslash
 	name = "soul blade"
 	icon = 'icons/obj/projectiles_experimental.dmi'
@@ -194,35 +194,33 @@
 	damage = 15
 	damage_type = BURN
 	flag = "energy"
-	custom_impact = 1
 
 /obj/item/projectile/bloodslash/Destroy()
 	var/turf/T = get_turf(src)
-	playsound(T, 'sound/effects/forge_over.ogg', 100, 1)
-	if (!locate(/obj/effect/decal/cleanable/blood/splatter) in T)
+	playsound(T, 'sound/effects/forge_over.ogg', 100, TRUE)
+	if(!locate(/obj/effect/decal/cleanable/blood/splatter) in T)
 		var/obj/effect/decal/cleanable/blood/splatter/S = new (T)//splash
-		S.amount = 1
 	..()
 
-/obj/item/projectile/bloodslash/to_bump(var/atom/A)
-	if (isliving(A))
+/obj/item/projectile/bloodslash/on_hit(atom/A)
+	if(isliving(A))
 		forceMove(A.loc)
 		var/mob/living/M = A
-		if (!iscultist(M))
+		if(!isvgcultist(M))
 			..()
 	qdel(src)
 
-/obj/item/projectile/bloodslash/on_hit(var/atom/target, var/blocked = 0)
+/obj/item/projectile/bloodslash/on_hit(atom/target, blocked = 0)
 	if (isliving(target))
 		var/mob/living/M = target
 		if(M.flags & INVULNERABLE)
-			return 0
-		if (iscultist(M))
-			return 0
-		if (M.stat == DEAD)
-			return 0
+			return FALSE
+		if(isvgcultist(M))
+			return FALSE
+		if(M.stat == DEAD)
+			return FALSE
 		to_chat(M, "<span class='warning'>You feel a searing heat inside of you!</span>")
-	return 1
+	return TRUE
 
 /obj/item/projectile/bloodslash/cultify()
 	return
@@ -248,20 +246,20 @@
 /obj/item/projectile/blooddagger/Destroy()
 	var/turf/T = get_turf(src)
 	playsound(T, 'sound/effects/forge_over.ogg', 100, 1)
-	if (!absorbed && !locate(/obj/effect/decal/cleanable/blood/splatter) in T)
+	if(!absorbed && !locate(/obj/effect/decal/cleanable/blood/splatter) in T)
 		var/obj/effect/decal/cleanable/blood/splatter/S = new (T)//splash
-		if (color)
+		if(color)
 			S.basecolor = color
 			S.update_icon()
 	..()
 
 /obj/item/projectile/blooddagger/to_bump(var/atom/A)
-	if (isliving(A))
+	if(isliving(A))
 		forceMove(A.loc)
 		var/mob/living/M = A
-		if (!iscultist(M))
+		if(!isvgcultist(M))
 			..()
-		else if (ishuman(M))
+		else if(ishuman(M))
 			var/mob/living/carbon/human/H = M
 			var/datum/reagent/blood/B = get_blood(H.vessel)
 			if (B && !(H.species.flags & NO_BLOOD))
@@ -279,12 +277,12 @@
 	if (isliving(target))
 		var/mob/living/M = target
 		if(M.flags & INVULNERABLE)
-			return 0
-		if (iscultist(M))
-			return 0
-		if (M.stat == DEAD)
-			return 0
-	return 1
+			return FALSE
+		if(isvgcultist(M))
+			return FALSE
+		if(M.stat == DEAD)
+			return FALSE
+	return TRUE
 
 /obj/item/projectile/blooddagger/cultify()
 	return

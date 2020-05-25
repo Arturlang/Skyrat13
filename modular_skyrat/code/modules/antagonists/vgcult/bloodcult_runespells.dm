@@ -409,7 +409,7 @@
 		//are our payers still here and about?
 		var/summoners = 0//the higher, the easier it is to perform the ritual without many cultists. default=0
 		for(var/mob/living/L in contributors)
-			if (iscultist(L) && (L in range(spell_holder,1)) && (L.stat == CONSCIOUS))
+			if (isvgcultist(L) && (L in range(spell_holder,1)) && (L.stat == CONSCIOUS))
 				summoners++
 				summoners += round(L.get_cult_power()/30)	//For every 30 cult power, you count as one additional cultist. So with Robes and Shoes, you already count as 3 cultists.
 			else											//This makes using the rune alone hard at roundstart, but fairly easy later on.
@@ -572,7 +572,7 @@
 		var/mob/living/L
 		if (isliving(speech.speaker))
 			L = speech.speaker
-			if (!iscultist(L))//geez we don't want that now do we
+			if (!isvgcultist(L))//geez we don't want that now do we
 				return
 		if (ishuman(speech.speaker))
 			var/mob/living/carbon/human/H = speech.speaker
@@ -671,7 +671,7 @@
 			var/i = 0
 			for (var/obj/item/weapon/tome/T in arcane_tomes)
 				var/mob/M = get_holder_of_type(T,/mob/living)
-				if (M && iscultist(M))
+				if (M && isvgcultist(M))
 					i++
 					valid_tomes["[i] - Tome carried by [M.real_name] ([T.talismans.len]/[MAX_TALISMAN_PER_TOME])"] = T
 			for (var/spell/cult/arcane_dimension/A in arcane_pockets)
@@ -737,7 +737,7 @@
 
 		//are our payers still here and about?
 		for(var/mob/living/L in contributors)
-			if (!iscultist(L) || !(L in range(spell_holder,1)) || (L.stat != CONSCIOUS))
+			if (!isvgcultist(L) || !(L in range(spell_holder,1)) || (L.stat != CONSCIOUS))
 				if (L.client)
 					L.client.images -= progbar
 				contributors.Remove(L)
@@ -855,11 +855,11 @@
 	//first lets check for a victim above
 	for (var/mob/living/silicon/S in T) // Has science gone too far????
 		if (S.cult_permitted || Holiday == APRIL_FOOLS_DAY)
-			if (!iscultist(S))
+			if (!isvgcultist(S))
 				targets.Add(S)
 
 	for (var/mob/living/carbon/C in T)//all carbons can be converted...but only carbons. no cult silicons.
-		if (!iscultist(C))
+		if (!isvgcultist(C))
 			targets.Add(C)
 	if (targets.len > 0)
 		victim = pick(targets)
@@ -1265,7 +1265,7 @@
 			if (type == 2 && get_dist(L,src)>=5)//talismans have a reduced range
 				continue
 			shadow(L,loc,"rune_stun")
-			if (iscultist(L))
+			if (isvgcultist(L))
 				duration--
 			if(iscarbon(L))
 				var/mob/living/carbon/C = L
@@ -1355,7 +1355,7 @@ var/list/blind_victims = list()
 	for(var/mob/living/M in potential_victims)
 		if (iscarbon(M))//mite do something with silicons later
 			var/mob/living/carbon/C = M
-			if (iscultist(C))
+			if (isvgcultist(C))
 				continue
 			to_chat(C, "<span class='danger'>Your vision goes dark, panic and paranoia take their toll on your mind.</span>")
 			shadow(C,T)//shadow trail moving from the spell_holder to the victim
@@ -1448,7 +1448,7 @@ var/list/blind_victims = list()
 
 /datum/rune_spell/blood_cult/deafmute/cast(var/deaf_duration = deaf_rune_duration, var/mute_duration = mute_rune_duration)
 	for(var/mob/living/M in range(effect_range,get_turf(spell_holder)))
-		if (iscultist(M))
+		if (isvgcultist(M))
 			continue
 		M.overlay_fullscreen("deafborder", /obj/abstract/screen/fullscreen/conversion_border)//victims DO still get blinded for a second
 		M.update_fullscreen_alpha("deafborder", 100, 5)
@@ -1559,7 +1559,7 @@ var/list/blind_victims = list()
 		if (dist <= effect_range+0.5)
 			anim(target = S, a_icon = 'icons/effects/224x224.dmi', flick_anim = "rune_reveal", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE*shock_range, offY = -WORLD_ICON_SIZE*shock_range, plane = LIGHTING_PLANE)
 			for(var/mob/living/L in viewers(S))
-				if (iscultist(L))
+				if (isvgcultist(L))
 					continue
 				var/dist2 = cheap_pythag(L.x - S.x, L.y - S.y)
 				if (dist2 > shock_range+0.5)
@@ -1577,7 +1577,7 @@ var/list/blind_victims = list()
 			if (R.reveal())//only hidden runes trigger the effect
 				anim(target = R, a_icon = 'icons/effects/224x224.dmi', flick_anim = "rune_reveal", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE*shock_range, offY = -WORLD_ICON_SIZE*shock_range, plane = LIGHTING_PLANE)
 				for(var/mob/living/L in viewers(R))
-					if (iscultist(L))
+					if (isvgcultist(L))
 						continue
 					var/dist2 = cheap_pythag(L.x - R.x, L.y - R.y)
 					if (dist2 > shock_range+0.5)
@@ -1607,12 +1607,12 @@ var/list/blind_victims = list()
 	var/mob/living/L = mover
 	if (last_threshold + 20 SECONDS > world.time)
 		return
-	if (!iscultist(L))
+	if (!isvgcultist(L))
 		total_uses--
 		last_threshold = world.time
 		var/list/seers = list()
 		for (var/mob/living/seer in range(7, get_turf(spell_holder)))
-			if (iscultist(seer) && seer.client && seer.client.screen)
+			if (isvgcultist(seer) && seer.client && seer.client.screen)
 				var/image/image_intruder = image(L, loc = seer, layer = ABOVE_LIGHTING_LAYER, dir = L.dir)
 				var/delta_x = (L.x - seer.x)
 				var/delta_y = (L.y - seer.y)
@@ -1916,7 +1916,7 @@ var/list/blind_victims = list()
 
 	if (pay_blood())
 		for(var/mob/living/L in range(effect_range,get_turf(spell_holder)))
-			if(L.stat != DEAD && iscultist(L))
+			if(L.stat != DEAD && isvgcultist(L))
 				playsound(L, 'sound/effects/fervor.ogg', 50, 0, -2)
 				anim(target = L, a_icon = 'icons/effects/effects.dmi', flick_anim = "rune_fervor", lay = NARSIE_GLOW, plane = LIGHTING_PLANE, direction = L.dir)
 				L.oxyloss = 0
@@ -2057,7 +2057,7 @@ var/list/blind_victims = list()
 		failsafe++
 		//are our payers still here and about?
 		for(var/mob/living/L in contributors)
-			if (!iscultist(L) || !(L in range(spell_holder,1)) || (L.stat != CONSCIOUS))
+			if (!isvgcultist(L) || !(L in range(spell_holder,1)) || (L.stat != CONSCIOUS))
 				if (L.client)
 					L.client.images -= progbar
 				var/obj/effect/cult_ritual/feet_portal/P = feet_portals[L]
@@ -2609,7 +2609,7 @@ var/list/bloodcult_exitportals = list()
 		failsafe++
 		//are our payers still here and about?
 		for(var/mob/living/L in contributors)
-			if (!iscultist(L) || !(L in range(spell_holder,1)) || (L.stat != CONSCIOUS))
+			if (!isvgcultist(L) || !(L in range(spell_holder,1)) || (L.stat != CONSCIOUS))
 				if (L.client)
 					L.client.images -= progbar
 				contributors.Remove(L)

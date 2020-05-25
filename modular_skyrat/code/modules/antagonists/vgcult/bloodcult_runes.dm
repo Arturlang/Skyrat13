@@ -264,7 +264,7 @@
 /obj/effect/rune/proc/trigger(var/mob/living/user)
 	user.delayNextAttack(5)
 
-	if(!iscultist(user))
+	if(!isvgcultist(user))
 		to_chat(user, "<span class='danger'>You can't mouth the arcane scratchings without fumbling over them.</span>")
 		return
 
@@ -368,7 +368,7 @@
 /obj/effect/rune/blood_cult/trigger(var/mob/living/user, var/talisman_trigger=0)
 	user.delayNextAttack(5)
 
-	if(!iscultist(user))
+	if(!isvgcultist(user))
 		to_chat(user, "<span class='danger'>You can't mouth the arcane scratchings without fumbling over them.</span>")
 		return
 
@@ -412,7 +412,7 @@
 		active_spell = null
 
 /obj/effect/rune/blood_cult/can_read_rune(var/mob/user) //Overload for specific criteria.
-	return iscultist(user)
+	return isvgcultist(user)
 
 /obj/effect/rune/blood_cult/examine(var/mob/user)
 	..()
