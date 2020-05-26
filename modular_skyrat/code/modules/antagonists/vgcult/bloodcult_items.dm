@@ -113,7 +113,7 @@ var/list/arcane_tomes = list()
 	if(href_list["page"])
 		current_page = text2num(href_list["page"])
 		flick("tome-flick",src)
-		playsound(usr, "pageturn", 50, 1, -5)
+		playsound(usr, "pageturn", 50, TRUE, -5)
 
 	if(href_list["talisman"])
 		var/obj/item/weapon/talisman/T = locate(href_list["talisman"])
@@ -148,19 +148,19 @@ var/list/arcane_tomes = list()
 		return
 
 	..()
-	M.take_organ_damage(0,10)
+	M.adjustFireLoss(10)
 	to_chat(M, "<span class='warning'>You feel a searing heat inside of you!</span>")
 
 /obj/item/weapon/tome/attack_hand(var/mob/living/user)
 	if(!isvgcultist(user) && state == TOME_OPEN)
-		user.take_organ_damage(0,10)
+		user.adjustFireLoss(10)
 		to_chat(user, "<span class='warning'>As you reach to pick up \the [src], you feel a searing heat inside of you!</span>")
-		playsound(loc, 'sound/effects/sparks2.ogg', 50, 1, 0,0,0)
+		playsound(loc, 'sound/effects/sparks2.ogg', 50, TRUE, 0, 0, 0)
 		user.Knockdown(5)
 		user.Stun(5)
 		icon_state = "tome"
 		item_state = "tome"
-		flick("tome-stun",src)
+		flick("tome-stun", src)
 		state = TOME_CLOSED
 		if(iscarbon(loc))
 			var/mob/living/carbon/M = loc
@@ -178,12 +178,12 @@ var/list/arcane_tomes = list()
 
 /obj/item/weapon/tome/attack_self(var/mob/living/user)
 	if(!isvgcultist(user))//Too dumb to live.
-		user.take_organ_damage(0,10)
+		user.adjustFireLoss(10)
 		to_chat(user, "<span class='warning'>You try to peek inside \the [src], only to feel a discharge of energy and a searing heat inside of you!</span>")
-		playsound(loc, 'sound/effects/sparks2.ogg', 50, 1, 0,0,0)
+		playsound(loc, 'sound/effects/sparks2.ogg', 50, TRUE, 0,0,0)
 		user.Knockdown(5)
 		user.Stun(5)
-		if (state == TOME_OPEN)
+		if(state == TOME_OPEN)
 			icon_state = "tome"
 			item_state = "tome"
 			flick("tome-stun",src)
@@ -192,7 +192,7 @@ var/list/arcane_tomes = list()
 			flick("tome-stun2",src)
 		return
 	else
-		if (state == TOME_CLOSED)
+		if(state == TOME_CLOSED)
 			icon_state = "tome-open"
 			item_state = "tome-open"
 			flick("tome-flickopen",src)
@@ -214,21 +214,21 @@ var/list/arcane_tomes = list()
 //absolutely no use except letting cultists know that you're here.
 /obj/item/weapon/tome/attack_ghost(var/mob/dead/observer/user)
 	if (state == TOME_OPEN && can_flick)
-		if (Adjacent(user))
+		if(Adjacent(user))
 			to_chat(user, "You flick a page.")
 			flick("tome-flick",src)
-			playsound(user, "pageturn", 50, 1, -3)
-			can_flick = 0
+			playsound(user, "pageturn", 50, TRUE, -3)
+			can_flick = FALSE
 			spawn(5)
-				can_flick = 1
+				can_flick = TRUE
 		else
 			to_chat(user, "<span class='warning'>You need to get closer to interact with the pages.</span>")
 
 /obj/item/weapon/tome/attackby(var/obj/item/I, var/mob/user)
-	if (..())
+	if(..())
 		return
-	if (istype(I, /obj/item/weapon/talisman))
-		if (talismans.len < MAX_TALISMAN_PER_TOME)
+	if(istype(I, /obj/item/weapon/talisman))
+		if(talismans.len < MAX_TALISMAN_PER_TOME)
 			if(user.drop_item(I))
 				talismans.Add(I)
 				I.forceMove(src)
@@ -249,12 +249,11 @@ var/list/arcane_tomes = list()
 		instance = T.spell_type
 		choices += list(list(T, talisman_image, initial(instance.desc_talisman), T.talisman_name()))
 		choice_to_talisman[initial(instance.name)] = T
-
-	if (state == TOME_CLOSED)
+	if(state == TOME_CLOSED)
 		icon_state = "tome-open"
 		item_state = "tome-open"
 		flick("tome-flickopen",src)
-		playsound(user, "pageturn", 50, 1, -5)
+		playsound(user, "pageturn", 50, TRUE, -5)
 		state = TOME_OPEN
 	var/choice = show_radial_menu(user,loc,choices,'icons/obj/cult_radial3.dmi', "radial-cult2")
 	if(!choice_to_talisman[choice])
@@ -262,7 +261,7 @@ var/list/arcane_tomes = list()
 	var/obj/item/weapon/talisman/chosen_talisman = choice_to_talisman[choice]
 	if(!usr.held_items.Find(src))
 		return
-	if (state == TOME_OPEN)
+	if(state == TOME_OPEN)
 		icon_state = "tome"
 		item_state = "tome"
 		flick("tome-stun",src)
@@ -284,10 +283,8 @@ var/list/arcane_tomes = list()
 	throwforce = 0
 	throw_range = 1
 	throw_speed = 1
-	layer = ABOVE_DOOR_LAYER
-	pressure_resistance = 1
+	layer = HIGH_OBJ_LAYER
 	attack_verb = list("slaps")
-	
 	var/blood_text = ""
 	var/obj/effect/rune/attuned_rune = null
 	var/spell_type = null
@@ -340,7 +337,6 @@ var/list/arcane_tomes = list()
 		user << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY text=#612014>[blood_text]</BODY></HTML>", "window=[name]")
 		onclose(user, "[name]")
 		return
-
 	if(!spell_type)
 		to_chat(user, "<span class='info'>This one however seems pretty unremarkable.</span>")
 		return
@@ -364,7 +360,6 @@ var/list/arcane_tomes = list()
 		onclose(user, "[name]")
 		onclose(user, "[name]")
 		return
-
 	if(isvgcultist(user))
 		trigger(user)
 
@@ -380,13 +375,11 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/talisman/proc/trigger(var/mob/user)
 	if(!user)
 		return
-
 	if(blood_text)
 		user << browse_rsc(file("goon/browserassets/css/fonts/youmurdererbb_reg.otf"))
 		user << browse("<HTML><HEAD><TITLE>[name]</TITLE></HEAD><BODY text=#612014>[blood_text]</BODY></HTML>", "window=[name]")
 		onclose(user, "[name]")
 		return
-
 	if(!spell_type)
 		if(!(src in user.held_items))//triggering an empty rune from a tome removes it.
 			if (istype(loc, /obj/item/weapon/tome))
@@ -396,7 +389,6 @@ var/list/arcane_tomes = list()
 				user << browse(T.tome_text(), "window=arcanetome;size=537x375")
 				user.put_in_hands(src)
 		return
-
 	if(attuned_rune)
 		if(attuned_rune.loc)
 			attuned_rune.trigger(user,1)
@@ -405,7 +397,6 @@ var/list/arcane_tomes = list()
 			to_chat(user, "<span class='warning'>The talisman disappears into dust. The rune it was attuned to appears to no longer exist.</span>")
 	else
 		new spell_type(user, src)
-
 	uses--
 	if(uses > 0)
 		return
@@ -418,14 +409,11 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/talisman/proc/imbue(var/mob/user, var/obj/effect/rune/blood_cult/R)
 	if(!user || !R)
 		return
-
 	if(blood_text)
 		to_chat(user, "<span class='warning'>Cannot imbue a talisman that has been written on.</span>")
 		return
-
-	var/datum/rune_spell/blood_cult/spell = get_rune_spell(user,null,"examine",R.word1, R.word2, R.word3)
-	if(initial(spell.talisman_absorb) == RUNE_CANNOT)//placing a talisman on a Conjure Talisman rune to try and fax it
-		user.drop_item(src)
+	var/datum/rune_spell/blood_cult/spell = get_rune_spell(user, null, "examine", R.word1, R.word2, R.word3)
+	if(initial(spell.talisman_absorb) == RUNE_CANNOT) //placing a talisman on a Conjure Talisman rune to try and fax it
 		src.forceMove(get_turf(R))
 		R.attack_hand(user)
 	else
@@ -435,11 +423,9 @@ var/list/arcane_tomes = list()
 		if(attuned_rune)
 			to_chat(user, "<span class='warning'>\The [src] is already imbued with the power of a rune.</span>")
 			return
-
 		if(!spell)
 			to_chat(user, "<span class='warning'>There is no power in those runes. \The [src] isn't reacting to it.</span>")
 			return
-
 		if(initial(spell.Act_restriction) > veil_thickness)
 			to_chat(user, "<span class='danger'>The veil is still too thick for \the [src] to draw power from this rune.</span>")
 			return
@@ -475,11 +461,11 @@ var/list/arcane_tomes = list()
 
 		switch(talisman_interaction)
 			if(RUNE_CAN_ATTUNE)
-				playsound(src, 'sound/effects/talisman_attune.ogg', 50, 0, -5)
+				playsound(src, 'sound/effects/talisman_attune.ogg', 50, FALSE, -5)
 				to_chat(user, "<span class='notice'>\The [src] can now remotely trigger the [initial(spell.name)] rune.</span>")
 				attuned_rune = R
 			if(RUNE_CAN_IMBUE)
-				playsound(src, 'sound/effects/talisman_imbue.ogg', 50, 0, -5)
+				playsound(src, 'sound/effects/talisman_imbue.ogg', 50, FALSE, -5)
 				to_chat(user, "<span class='notice'>\The [src] absorbs the power of the [initial(spell.name)] rune.</span>")
 				qdel(R)
 			if(RUNE_CANNOT)//like, that shouldn't even be possible because of the earlier if() check, but just in case.
@@ -1322,7 +1308,7 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/blood_tesseract/throw_impact(atom/hit_atom)
 	var/turf/T = get_turf(src)
 	playsound(T, 'sound/effects/hit_on_shattered_glass.ogg', 70, TRUE)
-	animate(target = T, a_icon = 'icons/effects/effects.dmi', flick_anim = "tesseract_break", lay = NARSIE_GLOW, plane = LIGHTING_PLANE)
+	anim(target = T, a_icon = 'icons/effects/effects.dmi', flick_anim = "tesseract_break", lay = NARSIE_GLOW, plane = LIGHTING_PLANE)
 	qdel(src)
 
 /obj/item/weapon/blood_tesseract/examine(var/mob/user)
@@ -1333,7 +1319,7 @@ var/list/arcane_tomes = list()
 /obj/item/weapon/blood_tesseract/attack_self(var/mob/living/user)
 	if(isvgcultist(user))
 		//Alright so we'll discard cult gear and equip the stuff stored inside.
-		animate(target = user, a_icon = 'icons/effects/64x64.dmi', flick_anim = "rune_tesseract", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE/2, offY = -WORLD_ICON_SIZE/2, plane = LIGHTING_PLANE)
+		anim(target = user, a_icon = 'icons/effects/64x64.dmi', flick_anim = "rune_tesseract", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE/2, offY = -WORLD_ICON_SIZE/2, plane = LIGHTING_PLANE)
 		user.doUnEquip(src)
 		if(remaining)
 			remaining.forceMove(get_turf(user))

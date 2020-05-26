@@ -117,30 +117,24 @@
 	return attack_hand(user)
 
 /obj/structure/cult/attack_hand(var/mob/living/user)
-	if(user.a_intent == I_HURT)
-		user.delayNextAttack(8)
-		user.visible_message("<span class='danger'>[user.name] [pick("kicks","punches")] \the [src]!</span>", \
-							"<span class='danger'>You strike at \the [src]!</span>", \
-							"You hear stone cracking.")
-		takeDamage(user.get_unarmed_damage(src))
-		if (sound_damaged)
-			playsound(get_turf(src), sound_damaged, 75, 1)
+	if(user.a_intent == INTENT_HARM)
+		..()
 	else if(isvgcultist(user))
 		cultist_act(user)
 	else
 		noncultist_act(user)
 
 /obj/structure/cult/proc/cultist_act(var/mob/user)
-
 	return TRUE
 
 /obj/structure/cult/proc/noncultist_act(var/mob/user)
 	to_chat(user,"<span class='sinister'>You feel madness taking its toll, trying to figure out \the [name]'s purpose</span>")
-	//might add some hallucinations or brain damage later, checks for cultist chaplains, etc
+	if(!hallucinating)
+		user.hallucinating =+ 10
 	return TRUE
 
 /obj/structure/cult/attack_construct(var/mob/user)
-	if (!Adjacent(user))
+	if(!Adjacent(user))
 		return FALSE
 	if(istype(user,/mob/living/simple_animal/construct/builder))
 		cultist_act(user)
@@ -160,8 +154,7 @@
 	name = "altar"
 	desc = "A bloodstained altar dedicated to Nar-Sie."
 	icon_state = "altar"
-	health = 100
-	maxHealth = 100
+	max_integrity = 100
 	sound_damaged = 'sound/effects/stone_hit.ogg'
 	sound_destroyed = 'sound/effects/stone_crumble.ogg'
 	layer = TABLE_LAYER
@@ -181,7 +174,7 @@
 	var/image/I = image(icon, "altar_overlay")
 	I.plane = ABOVE_HUMAN_PLANE
 	overlays.Add(I)
-	for (var/mob/living/carbon/C in loc)
+	for(var/mob/living/carbon/C in loc)
 		Crossed(C)
 
 	var/datum/holomap_marker/holomarker = new()
@@ -197,25 +190,22 @@
 
 
 /obj/structure/cult/altar/Destroy()
-
 	stopWatching()
-	if (blade)
-		if (loc)
+	if(blade)
+		if(loc)
 			blade.forceMove(loc)
 		else
 			qdel(blade)
 	blade = null
 	flick("[icon_state]-break", src)
-
 	holomap_markers -= HOLOMAP_MARKER_CULT_ALTAR+"_\ref[src]"
-
 	..()
 
 /obj/structure/cult/altar/attackby(var/obj/item/I, var/mob/user)
-	if (altar_task)
+	if(altar_task)
 		return ..()
 	if(istype(I,/obj/item/weapon/melee/soulblade) || (istype(I,/obj/item/weapon/melee/cultblade) && !istype(I,/obj/item/weapon/melee/cultblade/nocult)))
-		if (blade)
+		if(blade)
 			to_chat(user,"<span class='warning'>You must remove \the [blade] planted into \the [src] first.</span>")
 			return 1
 		var/turf/T = get_turf(user)
@@ -225,18 +215,18 @@
 		blade = I
 		update_icon()
 		var/mob/living/carbon/human/C = locate() in loc
-		if (C && C.resting)
+		if(C && C.resting)
 			C.unlock_from()
 			C.update_canmove()
 			lock_atom(C, lock_type)
 			C.apply_damage(blade.force, BRUTE, LIMB_CHEST)
-			if (C == user)
+			if(C == user)
 				user.visible_message("<span class='danger'>\The [user] holds \the [I] above their stomach and impales themselves on \the [src]!</span>","<span class='danger'>You hold \the [I] above your stomach and impale yourself on \the [src]!</span>")
 			else
 				user.visible_message("<span class='danger'>\The [user] holds \the [I] above \the [C]'s stomach and impales them on \the [src]!</span>","<span class='danger'>You hold \the [I] above \the [C]'s stomach and impale them on \the [src]!</span>")
 		else
 			to_chat(user, "You plant \the [blade] on top of \the [src]</span>")
-			if (istype(blade) && !blade.shade)
+			if(istype(blade) && !blade.shade)
 				var/icon/logo_icon = icon('icons/logos.dmi', "shade-blade")
 				for(var/mob/M in observers)
 					if(!M.client || isantagbanned(M) || jobban_isbanned(M, CULTIST) || M.client.is_afk())
@@ -260,7 +250,7 @@
 				C.resting = 1
 				C.update_canmove()
 			C.forceMove(loc)
-			returnToPool(G)
+			qdel(G)
 			to_chat(user, "<span class='warning'>You move \the [C] on top of \the [src]</span>")
 			return TRUE
 	..()
@@ -283,9 +273,9 @@
 	I.plane = ABOVE_HUMAN_PLANE
 	overlays.Add(I)
 
-	if (health < maxHealth/3)
+	if(obj_integrity < max_integrity/3)
 		overlays.Add("altar_damage2")
-	else if (health < 2*maxHealth/3)
+	else if(obj_integrity < 2* max_integrity /3)
 		overlays.Add("altar_damage1")
 
 //We want people on top of the altar to appear slightly higher
@@ -339,17 +329,13 @@
 			to_chat(user,"<span class='warning'>You must remove \the [blade] planted on \the [src] first.</span>")
 			return TRUE
 		var/mob/living/carbon/C = O
-
 		if(!do_after(user,C,15))
 			return
 		C.unlock_from()
-
 		if(ishuman(C))
 			C.resting = 1
 			C.update_canmove()
-
 		add_fingerprint(C)
-
 	O.forceMove(loc)
 	to_chat(user, "<span class='warning'>You move \the [O] on top of \the [src]</span>")
 

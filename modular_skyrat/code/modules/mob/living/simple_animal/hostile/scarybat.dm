@@ -1,6 +1,5 @@
 
 /mob/living/simple_animal/hostile/bat/cult  //A bat that is hostile, instead of retaliate, and is a bit more buff, otherwise glorious copypasta
-	faction = "cult"
 	maxHealth = 20
 	health = 20
 	harm_intent_damage = 8
@@ -24,7 +23,7 @@
 	attack_verb_simple = "bite"
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/meat/slab = 1)
 	pass_flags = PASSTABLE
-	faction = list("hostile")
+	faction = list("cult")
 	attack_sound = 'sound/weapons/bite.ogg'
 	obj_damage = 5
 	environment_smash = ENVIRONMENT_SMASH_NONE
@@ -34,7 +33,7 @@
 	speak_emote = list("squeaks")
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	minbodytemp = 0
-	supernatural = 1
+	supernatural = TRUE
 	var/max_co2 = 0 
 	var/min_oxy = 0
 	var/max_tox = 0
@@ -48,7 +47,7 @@
 	if(ismob(the_target))
 		var/mob/M = the_target
 		if(isanycultist(M))
-			return 0
+			return FALSE
 	return ..(the_target)
 
 
@@ -57,7 +56,7 @@
 	if(ismob(the_target))
 		var/mob/M = the_target
 		if(isanycultist(M))
-			return 0
+			return FALSE
 	return ..(the_target)
 
 /mob/living/simple_animal/hostile/bat/cult/cultify()
@@ -65,21 +64,21 @@
 
 /mob/living/simple_animal/hostile/bat/cult/Life()
 	if(timestopped)
-		return 0 //under effects of time magick
+		return FALSE //under effects of time magick
 	..()
 	if(emergency_shuttle.location == 1)
 		if(!enroute && !target)	//The shuttle docked, all monsters rush for the escape hallway
 			if(!shuttletarget && escape_list.len) //Make sure we didn't already assign it a target, and that there are targets to pick
 				shuttletarget = pick(escape_list) //Pick a shuttle target
-			enroute = 1
-			stop_automated_movement = 1
+			enroute = TRUE
+			stop_automated_movement = TRUE
 /*			spawn()
 				if(!src.stat)
 					horde()*/
 
 		if(get_dist(src, shuttletarget) <= 2)		//The monster reached the escape hallway
-			enroute = 0
-			stop_automated_movement = 0
+			enroute = FALSE
+			stop_automated_movement = FALSE
 
 /mob/living/simple_animal/hostile/bat/cult/proc/horde()
 	var/turf/T = get_step_to(src, shuttletarget)

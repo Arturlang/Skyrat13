@@ -119,11 +119,11 @@
 	pixel_x = -WORLD_ICON_SIZE
 	pixel_y = -WORLD_ICON_SIZE
 	animate_movement = 0
-	var/atom/movable/rider = null//lone user?
+	var/atom/movable/rider //lone user?
 	var/list/packed = list()//moving a lot of stuff?
 
-	var/turf/starting = null
-	var/turf/target = null
+	var/turf/startin
+	var/turf/target
 
 	var/dist_x = 0
 	var/dist_y = 0
@@ -150,19 +150,19 @@
 
 /obj/effect/bloodcult_jaunt/New(var/turf/loc, var/mob/user, var/turf/destination, var/turf/packup)
 	..()
-	if (!user && !packup)
+	if(!user && !packup)
 		qdel(src)
 		return
-	if (user)
+	if(user)
 		user.forceMove(src)
 		rider = user
-		if (ismob(rider))
+		if(ismob(rider))
 			var/mob/M = rider
 			M.see_invisible = SEE_INVISIBLE_CULTJAUNT
 			M.see_invisible_override = SEE_INVISIBLE_CULTJAUNT
 			M.apply_vision_overrides()
 			M.flags |= INVULNERABLE
-	if (packup)
+	if(packup)
 		for (var/atom/movable/AM in packup)
 			if (!AM.anchored)
 				AM.forceMove(src)
@@ -178,11 +178,11 @@
 	initial_pixel_x = pixel_x
 	initial_pixel_y = pixel_y
 	//first of all, if our target is off Z-Level, we're immediately teleporting to the edge of the map closest to the target
-	if (target.z != z)
+	if(target.z != z)
 		move_to_edge()
 	//quickly making sure that we're not jaunting to where we are
 	bump_target_check()
-	if (!src||!loc)
+	if(!src||!loc)
 		return
 	//next, let's rotate the jaunter's sprite to face our destination
 	init_angle()
@@ -190,10 +190,10 @@
 	init_jaunt()
 
 /obj/effect/bloodcult_jaunt/Destroy()
-	if (rider)
+	if(rider)
 		qdel(rider)
 		rider = null
-	if (packed.len > 0)
+	if(packed.len > 0)
 		for(var/atom/A in packed)
 			qdel(A)
 	packed = list()
@@ -223,15 +223,15 @@
 	var/target_y
 	var/dx = abs(target.x - world.maxx/2)
 	var/dy = abs(target.y - world.maxy/2)
-	if (dx > dy)
+	if(dx > dy)
 		target_y = world.maxy/2 + rand(-4,4)
-		if (target.x > world.maxx/2)
+		if(target.x > world.maxx/2)
 			target_x = world.maxx - TRANSITIONEDGE - rand(16,20)
 		else
 			target_x = TRANSITIONEDGE + rand(16,20)
 	else
 		target_x = world.maxx/2 + rand(-4,4)
-		if (target.y > world.maxy/2)
+		if(target.y > world.maxy/2)
 			target_y = world.maxy - TRANSITIONEDGE - rand(16,20)
 		else
 			target_y = TRANSITIONEDGE + rand(16,20)
@@ -294,13 +294,13 @@
 
 /obj/effect/bloodcult_jaunt/proc/bresenham_step(var/distA, var/distB, var/dA, var/dB)
 	var/dist = get_dist(src,target)
-	if (dist > 135)
+	if(dist > 135)
 		make_bresenham_step(distA, distB, dA, dB)
-	if (dist > 45)
+	if(dist > 45)
 		make_bresenham_step(distA, distB, dA, dB)
-	if (dist > 15)
+	if(dist > 15)
 		make_bresenham_step(distA, distB, dA, dB)
-	if (dist < 10 && !landing)
+	if(dist < 10 && !landing)
 		landing = 1
 		playsound(src.target, 'sound/effects/cultjaunt_prepare.ogg', 75, 0, -3)
 		landing_animation = anim(target = src.target, a_icon = 'icons/effects/effects.dmi', flick_anim = "cult_jaunt_prepare", lay = SNOW_OVERLAY_LAYER, plane = EFFECTS_PLANE)
@@ -338,7 +338,7 @@
 		sleep(sleeptime)
 
 /obj/effect/bloodcult_jaunt/proc/init_jaunt()
-	if (!rider && packed.len <= 0)
+	if(!rider && packed.len <= 0)
 		qdel(src)
 		return
 	spawn while(loc)
@@ -352,18 +352,18 @@
 		process_step()
 
 /obj/effect/bloodcult_jaunt/proc/bump_target_check()
-	if (loc == target)
+	if(loc == target)
 		playsound(loc, 'sound/effects/cultjaunt_land.ogg', 30, 0, -3)
-		if (rider)
+		if(rider)
 			rider.forceMove(target)
-			if (ismob(rider))
+			if(ismob(rider))
 				var/mob/M = rider
 				M.flags &= ~INVULNERABLE
 				M.see_invisible = SEE_INVISIBLE_LIVING
 				M.see_invisible_override = 0
 				M.apply_vision_overrides()
 			rider = null
-		if (packed.len > 0)
+		if(packed.len > 0)
 			for(var/atom/movable/AM in packed)
 				AM.forceMove(target)
 				if (ismob(AM))
@@ -374,7 +374,7 @@
 					M.apply_vision_overrides()
 			packed = list()
 
-		if (landing_animation)
+		if(landing_animation)
 			flick("cult_jaunt_land",landing_animation)
 		qdel(src)
 
@@ -424,7 +424,7 @@ var/bloodstone_backup = 0
 ///////////////////////////////////////STUN INDICATOR////////////////////////////////////////////////
 /obj/effect/stun_indicator
 	icon = null
-	anchored = 1
+	anchored = TRUE
 	mouse_opacity = 0
 	var/list/viewers = list()
 	var/image/indicator = null
@@ -433,52 +433,52 @@ var/bloodstone_backup = 0
 
 /obj/effect/stun_indicator/New()
 	..()
-	if (!ismob(loc))
+	if(!ismob(loc))
 		qdel(src)
 		return
 
 	victim = loc
 	current_dots = clamp(round(victim.knockdown/2.5),0,5)
 
-	if (!current_dots)
+	if(!current_dots)
 		qdel(src)
 		return
 
 	current_dots++//so we get integers from 1 to 6
 
-	for (var/mob/M in player_list)
-		if (isvgcultist(M) && M.client)
+	for(var/mob/M in player_list)
+		if(isvgcultist(M) && M.client)
 			viewers += M.client
 
-	indicator = image(icon='icons/obj/cult.dmi',loc=victim,icon_state="",layer=SNOW_OVERLAY_LAYER)
+	indicator = image(icon = 'icons/obj/cult.dmi', loc = victim,icon_state = "", layer = SNOW_OVERLAY_LAYER)
 	update_indicator()
 
 /obj/effect/stun_indicator/proc/update_indicator()
 	set waitfor = FALSE
-	while (victim && (victim.stat < DEAD) && victim.knockdown)
-		for (var/client/C in viewers)
+	while(victim && (victim.stat < DEAD) && victim.knockdown)
+		for(var/client/C in viewers)
 			C.images -= indicator
 		var/dots = clamp(1+round(victim.knockdown/2.5),1,6)
 		var/anim = 0
-		if (dots!=current_dots)
+		if(dots!=current_dots)
 			anim = 1
 			current_dots = dots
 		indicator.overlays.len = 0
-		indicator = image(icon='icons/obj/cult.dmi',loc=victim,icon_state="",layer=SNOW_OVERLAY_LAYER)
+		indicator = image(icon='icons/obj/cult.dmi', loc = victim,icon_state = "", layer = SNOW_OVERLAY_LAYER)
 		indicator.plane = EFFECTS_PLANE
 		indicator.pixel_y = 8
-		for (var/i = 1 to dots)
+		for(var/i = 1 to dots)
 			var/state = "stun_dot1"
-			if (current_dots == i)
-				if (anim)
+			if(current_dots == i)
+				if(anim)
 					state = "stun_dot2-flick"
-					var/image/I = image(icon='icons/obj/cult.dmi',icon_state="stun_dot-gone")
+					var/image/I = image(icon = 'icons/obj/cult.dmi', icon_state = "stun_dot-gone")
 					I.plane = EFFECTS_PLANE
 					I = place_indicator(I,i+1)
 					indicator.overlays += I
 				else
 					state = "stun_dot2"
-			var/image/I = image(icon='icons/obj/cult.dmi',icon_state=state)
+			var/image/I = image(icon = 'icons/obj/cult.dmi', icon_state = state)
 			I.plane = EFFECTS_PLANE
 			I = place_indicator(I,i)
 			indicator.overlays += I
@@ -487,27 +487,27 @@ var/bloodstone_backup = 0
 		sleep(10)
 	qdel(src)
 
-/obj/effect/stun_indicator/proc/place_indicator(var/image/I,var/dot)
+/obj/effect/stun_indicator/proc/place_indicator(image/I, dot)
 	switch (dot)
-		if (2,3)
+		if(2,3)
 			I.pixel_x = -8
-		if (5,6)
+		if(5,6)
 			I.pixel_x = 8
 	switch (dot)
-		if (2,6)
+		if(2,6)
 			I.pixel_y = 4
-		if (3,5)
+		if(3,5)
 			I.pixel_y = -4
-		if (1)
+		if(1)
 			I.pixel_y = 8
-		if (4)
+		if(4)
 			I.pixel_y = -8
 	return I
 
 
 
 /obj/effect/stun_indicator/Destroy()
-	for (var/client/C in viewers)
+	for(var/client/C in viewers)
 		C.images -= indicator
 	..()
 

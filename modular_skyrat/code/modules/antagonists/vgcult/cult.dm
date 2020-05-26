@@ -12,7 +12,7 @@
 			return TRUE
 	return FALSE
 */
-/proc/is_convertable_to_cult(mob/living/M,datum/team/cult/specific_cult)
+/proc/is_convertable_to_vgcult(mob/living/M,datum/team/cult/specific_cult)
 	if(!istype(M))
 		return FALSE
 	if(M.mind)
@@ -98,7 +98,7 @@
 				main_cult = C.cult_team
 	..()
 
-/datum/game_mode/proc/add_cultist(datum/mind/cult_mind, stun , equip = FALSE) //BASE
+/datum/game_mode/proc/add_vgcultist(datum/mind/cult_mind, stun , equip = FALSE) //BASE
 	if (!istype(cult_mind))
 		return FALSE
 
@@ -110,7 +110,7 @@
 			cult_mind.current.Unconscious(100)
 		return TRUE
 
-/datum/game_mode/proc/remove_cultist(datum/mind/cult_mind, silent, stun)
+/datum/game_mode/proc/remove_vgcultist(datum/mind/cult_mind, silent, stun)
 	if(cult_mind.current)
 		var/datum/antagonist/cult/cult_datum = cult_mind.has_antag_datum(/datum/antagonist/cult)
 		if(!cult_datum)
