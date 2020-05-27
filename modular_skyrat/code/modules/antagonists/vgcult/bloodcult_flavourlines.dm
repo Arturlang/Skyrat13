@@ -238,7 +238,7 @@ var/list/all_depts_list = list(
 	SECURITY_POSITIONS,
 )
 
-/datum/faction/bloodcult/proc/send_flavour_text_refuse(var/mob/victim, var/mob/converter)
+/datum/faction/bloodcult/proc/send_flavour_text_refuse(mob/victim, mob/converter)
 	// -- Static context
 	// Default lines
 	var/list/valid_lines = list(
@@ -257,7 +257,7 @@ var/list/all_depts_list = list(
 	valid_lines += failure_lines_by_specific_job[victim_job]
 	// The roles he may add
 	if(victim.mind)
-		for (var/role in victim.mind.antag_roles)
+		for(var/role in victim.mind.antag_roles)
 			valid_lines += failure_lines_by_specific_role[role]
 	// The race
 	if(ishuman(victim))
@@ -286,17 +286,19 @@ var/list/all_depts_list = list(
 	// Act
 	if(veil_thickness >= CULT_ACT_III)
 		valid_lines += failure_lines_thin_veil
-
-	if(victim.mind && victim.mind.assigned_role == "Chaplain")
-		var/list/cult_blood_chaplain = list("cult", "narsie", "nar'sie", "narnar", "nar-sie")
-		var/list/cult_clock_chaplain = list("ratvar", "clockwork", "ratvarism")
-		if(religion_name in cult_blood_chaplain)
-			to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>Rejoice, I will give you the ending you desired.</span></span>")
-		else if(religion_name in cult_clock_chaplain)
-			to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>I will take your body, but when your soul returns to Ratvar, tell him that[pick(\
+	
+	if(is_servant_of_ratvar(victim))
+		to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>I will take your body, but when your soul returns to Ratvar, tell him that[pick(\
 				"... he SUCKS!",\
 				" there isn't room enough for the two of us on this plane!",\
 				" he'll never be anything but a lame copycat.")]</span></span>")
+
+	else if(victim.mind && victim.mind.assigned_role == "Chaplain")
+		var/list/cult_blood_chaplain = list("cult", "narsie", "nar'sie", "narnar", "nar-sie")
+		var/list/cult_clock_chaplain = list("ratvar", "clockwork", "ratvarism")
+		if(GLOB.deity == "Nar'Sie")
+			to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>Rejoice, I will give you the ending you desired.</span></span>")
+	
 
 	var/chosen_line = pickweight(valid_lines)
 	to_chat(victim, "<span class='game say'><span class='danger'>Nar-Sie</span> murmurs, <span class='sinister'>[chosen_line]</span>")
