@@ -130,7 +130,7 @@
 /obj/structure/cult/proc/noncultist_act(var/mob/user)
 	to_chat(user,"<span class='sinister'>You feel madness taking its toll, trying to figure out \the [name]'s purpose</span>")
 	if(!hallucinating)
-		user.hallucinating =+ 10
+		user.hallucinating += 10
 	return TRUE
 
 /obj/structure/cult/attack_construct(var/mob/user)
@@ -172,7 +172,7 @@
 	..()
 	flick("[icon_state]-spawn", src)
 	var/image/I = image(icon, "altar_overlay")
-	I.plane = ABOVE_HUMAN_PLANE
+	I.plane = ABOVE_MOB_LAYER
 	overlays.Add(I)
 	for(var/mob/living/carbon/C in loc)
 		Crossed(C)
