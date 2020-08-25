@@ -108,7 +108,7 @@
 ///////////////////////////////////////JAUNT////////////////////////////////////////////////
 //Cultists ride in those when teleporting
 
-/obj/effect/bloodcult_jaunt
+/obj/effect/bloodcult_jaunt/
 	mouse_opacity = 0
 	icon = 'icons/effects/96x96.dmi'
 	icon_state ="cult_jaunt"
@@ -396,18 +396,18 @@ var/bloodstone_backup = 0
 		bloodstone_backup++
 		var/mobtype
 		switch(bloodstone_backup)
-			i(0,1,2)
+			if(0, 1, 2)
 				mobtype = pick(
 					1; /mob/living/simple_animal/hostile/faithless/cult,
 					2; /mob/living/simple_animal/hostile/scarybat/cult,
 					)
-			if(3,4)
+			if(3, 4)
 				mobtype = pick(
 					1; /mob/living/simple_animal/hostile/creature/cult,
 					3; /mob/living/simple_animal/hostile/faithless/cult,
 					2; /mob/living/simple_animal/hostile/scarybat/cult,
 					)
-			if(5,6)
+			if(5, 6)
 				mobtype = pick(
 					2; /mob/living/simple_animal/hostile/creature/cult,
 					2; /mob/living/simple_animal/hostile/faithless/cult,

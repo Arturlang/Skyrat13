@@ -1,6 +1,6 @@
 
 
-/obj/effect/rune //Abstract, currently only supports blood as a reagent without some serious overriding.
+/obj/effect/vg_rune/ //Abstract, currently only supports blood as a reagent without some serious overriding.
 	name = "rune"
 	desc = "A strange collection of symbols drawn in blood."
 	anchored = 1
@@ -36,7 +36,7 @@
 	//Prevents the same rune from being concealed/revealed several times on a row.
 	var/conceal_cooldown = 0
 
-/obj/effect/rune/New()
+/obj/effect/vg_rune/New()
 	..()
 	blood_image = image(src)
 
@@ -51,7 +51,7 @@
 	..()
 
 
-/obj/effect/rune/Destroy()
+/obj/effect/vg_rune/Destroy()
 	for(var/mob/living/silicon/ai/AI in player_list)
 		if (AI.client)
 			AI.client.images -= blood_image
@@ -75,7 +75,7 @@
 
 	..()
 
-/obj/effect/rune/examine(var/mob/user)
+/obj/effect/vg_rune/examine(var/mob/user)
 	..()
 	var/datum/rune_spell/rune_name = get_rune_spell(null, null, "examine", word1,word2,word3)
 
@@ -84,13 +84,13 @@
 		to_chat(user, "<span class='info'>It reads: <i>[word1 ? "[word1.rune]" : ""][word2 ? " [word2.rune]" : ""][word3 ? " [word3.rune]" : ""]</i>. [rune_name ? " That's a <b>[initial(rune_name.name)]</b> rune." : "It doesn't match any rune spells."]</span>")
 
 
-/obj/effect/rune/proc/can_read_rune(var/mob/user) //Overload for specific criteria.
+/obj/effect/vg_rune/proc/can_read_rune(var/mob/user) //Overload for specific criteria.
 	return 1
 
-/obj/effect/rune/cultify()
+/obj/effect/vg_rune/cultify()
 	return
 
-/obj/effect/rune/ex_act(var/severity)
+/obj/effect/vg_rune/ex_act(var/severity)
 	switch (severity)
 		if (1)
 			qdel(src)
@@ -98,39 +98,39 @@
 			if (prob(15))
 				qdel(src)
 
-/obj/effect/rune/emp_act()
+/obj/effect/vg_rune/emp_act()
 	return
 
-/obj/effect/rune/blob_act()
+/obj/effect/vg_rune/blob_act()
 	return
 
-/obj/effect/rune/update_icon()
+/obj/effect/vg_rune/update_icon()
 	var/datum/rune_spell/spell = get_rune_spell(null, null, "examine", word1, word2, word3)
 
 	if(spell) // && initial(spell.Act_restriction) <= veil_thickness) Add to bloodcult
-		animated = 1
+		animated = TRUE
 	else
-		animated = 0
+		animated = FALSE
 
 	var/lookup = ""
-	if (word1)
+	if(word1)
 		lookup += "[word1.icon_state]-[animated]-[blood1.data["blood_colour"]]"
-	if (word2)
+	if(word2)
 		lookup += "-[word2.icon_state]-[animated]-[blood2.data["blood_colour"]]"
-	if (word3)
+	if(word3)
 		lookup += "-[word3.icon_state]-[animated]-[blood3.data["blood_colour"]]"
 
-	if (lookup in uristrune_cache)
+	if(lookup in uristrune_cache)
 		icon = uristrune_cache[lookup]
 	else
 		var/icon/I1 = icon('icons/effects/uristrunes.dmi', "")
-		if (word1)
+		if(word1)
 			I1 = make_iconcache(word1,blood1,animated)
 		var/icon/I2 = icon('icons/effects/uristrunes.dmi', "")
-		if (word2)
+		if(word2)
 			I2 = make_iconcache(word2,blood2,animated)
 		var/icon/I3 = icon('icons/effects/uristrunes.dmi', "")
-		if (word3)
+		if(word3)
 			I3 = make_iconcache(word3,blood3,animated)
 
 		var/icon/I = icon('icons/effects/uristrunes.dmi', "")
@@ -145,9 +145,9 @@
 	else
 		animate(src)
 
-/obj/effect/rune/proc/make_iconcache(var/datum/runeword/word, var/datum/reagent/blood/blood, var/animated) //For caching rune icons
+/obj/effect/vg_rune/proc/make_iconcache(datum/runeword/word, datum/reagent/blood/blood, animated) //For caching rune icons
 	var/icon/I = icon('icons/effects/uristrunes.dmi', "")
-	if (!blood)
+	if(!blood)
 		blood = new
 	var/lookupword = "[word.icon_state]-[animated]-[blood.data["blood_colour"]]"
 	if(lookupword in uristrune_cache)
@@ -194,7 +194,7 @@
 		I.MapColors(0.5,0,0,0,0.5,0,0,0,0.5)//we'll darken that color a bit
 	return I
 
-/obj/effect/rune/proc/idle_pulse()
+/obj/effect/vg_rune/proc/idle_pulse()
 	//This masterpiece of a color matrix stack produces a nice animation no matter which color the rune is.
 	animate(src, color = list(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0), time = 10, loop = -1)//1
 	animate(color = list(1.125,0.06,0,0,0,1.125,0.06,0,0.06,0,1.125,0,0,0,0,1,0,0,0,0), time = 2)//2
@@ -214,7 +214,7 @@
 	animate(color = list(1.125,0.06,0,0,0,1.125,0.06,0,0.06,0,1.125,0,0,0,0,1,0,0,0,0), time = 1)//2
 
 
-/obj/effect/rune/proc/one_pulse()
+/obj/effect/vg_rune/proc/one_pulse()
 	animate(src, color = list(1.625,0.35,0.06,0,0.06,1.625,0.35,0,0.35,0.06,1.625,0,0,0,0,1,0,0,0,0), time = 1)
 	animate(color = list(2,0.67,0.27,0,0.27,2,0.67,0,0.67,0.27,2,0,0,0,0,1,0,0,0,0), time = 2)
 	animate(color = list(1.875,0.56,0.19,0,0.19,1.875,0.56,0,0.56,0.19,1.875,0,0,0,0,1,0,0,0,0), time = 1)
@@ -232,36 +232,36 @@
 		else
 			animate(src)
 
-/obj/effect/rune/attackby(obj/I, mob/user)
+/obj/effect/vg_rune/attackby(obj/I, mob/user)
 	..()
 
 
-/obj/effect/rune/Crossed(var/atom/movable/mover)
+/obj/effect/vg_rune/Crossed(var/atom/movable/mover)
 	if (ismob(mover))
 		var/mob/user = mover
 		var/datum/rune_spell/rune_effect = get_rune_spell(user, src, "walk" , word1, word2, word3)
 		if (rune_effect)
 			rune_effect.Added(mover)
 
-/obj/effect/rune/Uncrossed(var/atom/movable/mover)
+/obj/effect/vg_rune/Uncrossed(var/atom/movable/mover)
 	if (active_spell && ismob(mover))
 		active_spell.Removed(mover)
 
-/obj/effect/rune/attack_animal(var/mob/living/simple_animal/user)
+/obj/effect/vg_rune/attack_animal(var/mob/living/simple_animal/user)
 	if(istype(user, /mob/living/simple_animal/construct))
 		trigger(user)
 
-/obj/effect/rune/attack_paw(var/mob/living/user)
+/obj/effect/vg_rune/attack_paw(var/mob/living/user)
 	if(ismonkey(user))
 		trigger(user)
 
-/obj/effect/rune/attack_hand(var/mob/living/user)
+/obj/effect/vg_rune/attack_hand(var/mob/living/user)
 	trigger(user)
 
-/obj/effect/rune/attack_robot(var/mob/living/user) //Allows for robots to remotely trigger runes, since attack_robot has infinite range.
+/obj/effect/vg_rune/attack_robot(var/mob/living/user) //Allows for robots to remotely trigger runes, since attack_robot has infinite range.
 	trigger(user)
 
-/obj/effect/rune/proc/trigger(var/mob/living/user)
+/obj/effect/vg_rune/proc/trigger(var/mob/living/user)
 	user.delayNextAttack(5)
 
 	if(!isvgcultist(user))
@@ -289,7 +289,7 @@
 
 	add_hiddenprint(user)
 
-	if (active_spell)
+	if(active_spell)
 		active_spell.midcast(user)
 		return
 
@@ -297,12 +297,12 @@
 
 	active_spell = get_rune_spell(user, src, "ritual", word1, word2, word3)
 
-	if (!active_spell)
+	if(!active_spell)
 		return fizzle(user)
 	else if (active_spell.destroying_self)
 		active_spell = null
 
-/obj/effect/rune/proc/fizzle(var/mob/living/user)
+/obj/effect/vg_rune/proc/fizzle(var/mob/living/user)
 	var/silent = user.checkTattoo(TATTOO_SILENT)
 	if(!silent)
 		user.say(pick("B'ADMINES SP'WNIN SH'T","IC'IN O'OC","RO'SHA'M I'SA GRI'FF'N ME'AI","TOX'IN'S O'NM FI'RAH","IA BL'AME TOX'IN'S","FIR'A NON'AN RE'SONA","A'OI I'RS ROUA'GE","LE'OAN JU'STA SP'A'C Z'EE SH'EF","IA PT'WOBEA'RD, IA A'DMI'NEH'LP","I'F ON'Y I 'AD 'TAB' E"))
@@ -311,7 +311,7 @@
 	"<span class='warning'>The markings pulse with a small burst of light, then fall dark.</span>",\
 	"<span class='warning'>You hear a faint fizzle.</span>")
 
-/obj/effect/rune/proc/conceal()
+/obj/effect/vg_rune/proc/conceal()
 	if(active_spell && !active_spell.can_conceal)
 		active_spell.abort(RITUALABORT_CONCEAL)
 	animate(src, alpha = 0, time = 5)
@@ -319,7 +319,7 @@
 		invisibility=INVISIBILITY_OBSERVER
 		alpha = 127
 
-/obj/effect/rune/proc/reveal() //Returns 1 if rune was revealed from a invisible state.
+/obj/effect/vg_rune/proc/reveal() //Returns 1 if rune was revealed from a invisible state.
 	if(invisibility != 0)
 		alpha = 0
 		invisibility=0
@@ -334,11 +334,11 @@
 
 /////////////////////////BLOOD CULT RUNES//////////////////////
 
-/obj/effect/rune/blood_cult
+/obj/effect/vg_rune/blood_cult
 	desc = "A strange collection of symbols drawn in blood."
 	runeset_identifier = "blood_cult"
 
-/obj/effect/rune/blood_cult/New()
+/obj/effect/vg_rune/blood_cult/New()
 	..()
 	var/datum/holomap_marker/holomarker = new()
 	holomarker.id = HOLOMAP_MARKER_CULT_RUNE
@@ -348,11 +348,11 @@
 	holomarker.z = src.z
 	holomap_markers[HOLOMAP_MARKER_CULT_RUNE+"_\ref[src]"] = holomarker
 
-/obj/effect/rune/blood_cult/Destroy()
+/obj/effect/vg_rune/blood_cult/Destroy()
 	..()
 	holomap_markers -= HOLOMAP_MARKER_CULT_RUNE+"_\ref[src]" //Add to blood cult rune
 
-/obj/effect/rune/blood_cult/attackby(obj/I, mob/user)
+/obj/effect/vg_rune/blood_cult/attackby(obj/I, mob/user)
 	..()
 	if(isholyweapon(I))
 		to_chat(user, "<span class='notice'>You disrupt the vile magic with the deadening field of \the [I]!</span>")
@@ -365,7 +365,7 @@
 		T.imbue(user,src)
 	return
 
-/obj/effect/rune/blood_cult/trigger(var/mob/living/user, var/talisman_trigger=0)
+/obj/effect/vg_rune/blood_cult/trigger(var/mob/living/user, var/talisman_trigger=0)
 	user.delayNextAttack(5)
 
 	if(!isvgcultist(user))
@@ -411,10 +411,10 @@
 	else if (active_spell.destroying_self)
 		active_spell = null
 
-/obj/effect/rune/blood_cult/can_read_rune(var/mob/user) //Overload for specific criteria.
+/obj/effect/vg_rune/blood_cult/can_read_rune(var/mob/user) //Overload for specific criteria.
 	return isvgcultist(user)
 
-/obj/effect/rune/blood_cult/examine(var/mob/user)
+/obj/effect/vg_rune/blood_cult/examine(var/mob/user)
 	..()
 
 	if(can_read_rune(user) || isobserver(user))
@@ -463,11 +463,11 @@
 	//Add word to a rune if there is one, otherwise create one. However, there can be no more than 3 words.
 	//Returns 0 if failure, 1 if finished a rune, 2 if success but rune still has room for words.
 
-	var/obj/effect/rune/rune = locate() in T
+	var/obj/effect/vg_rune/rune = locate() in T
 	if(!rune)
 		var/datum/runeword/rune_typecast = word
 		if(rune_typecast.identifier == "blood_cult") //Lazy fix because I'm not sure how to modularize this automatically. Fix if you want to.
-			rune = new /obj/effect/rune/blood_cult(T)
+			rune = new /obj/effect/vg_rune/blood_cult(T)
 
 	if (rune.word1 && rune.word2 && rune.word3)
 		return 0
@@ -543,7 +543,7 @@
 
 
 /proc/erase_rune_word(var/turf/T)
-	var/obj/effect/rune/rune = locate() in T
+	var/obj/effect/vg_rune/rune = locate() in T
 	if(!rune)
 		return null
 

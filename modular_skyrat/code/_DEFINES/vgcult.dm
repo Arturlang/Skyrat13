@@ -80,3 +80,7 @@
 #define CONVERSION_REFUSE	-1
 #define CONVERSION_NOCHOICE	0
 #define CONVERSION_ACCEPT	1
+
+#define NARSIE_GLOW 6
+
+#define ROLE_VGCULTIST "vgcultist"

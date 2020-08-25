@@ -2,6 +2,7 @@
 // Holo-Minimaps Generation Subsystem handles initialization of the holo minimaps.
 // Look in code/modules/holomap/generate_holomap.dm to find generateHoloMinimaps()
 //
+/*
 SUBSYSTEM_DEF(holomaps)
 	name = "HoloMiniMaps"
 	init_order = INIT_ORDER_HOLOMAPS
@@ -22,3 +23,4 @@ SUBSYSTEM_DEF(holomaps)
 	if (!Debug2)
 		return // Only show up in stat panel if debugging is enabled.
 	. = ..()
+*/

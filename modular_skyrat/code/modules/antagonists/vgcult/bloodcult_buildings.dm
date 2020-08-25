@@ -129,8 +129,11 @@
 
 /obj/structure/cult/proc/noncultist_act(var/mob/user)
 	to_chat(user,"<span class='sinister'>You feel madness taking its toll, trying to figure out \the [name]'s purpose</span>")
-	if(!hallucinating)
-		user.hallucinating += 10
+	if(!ishuman(user))
+		return TRUE
+	var/mob/living/carbon/human/H = user
+	if(!H.is_hallucinating)
+		H.hallucinating += 10
 	return TRUE
 
 /obj/structure/cult/attack_construct(var/mob/user)
@@ -176,7 +179,7 @@
 	overlays.Add(I)
 	for(var/mob/living/carbon/C in loc)
 		Crossed(C)
-
+/* Holomaps incompelete
 	var/datum/holomap_marker/holomarker = new()
 	holomarker.id = HOLOMAP_MARKER_CULT_ALTAR
 	holomarker.filter = HOLOMAP_FILTER_CULT
@@ -187,7 +190,7 @@
 
 	holomap_datum = new
 	holomap_datum.initialize_holomap(get_turf(src), cursor_icon = "altar-here")
-
+*/
 
 /obj/structure/cult/altar/Destroy()
 	stopWatching()
@@ -198,28 +201,27 @@
 			qdel(blade)
 	blade = null
 	flick("[icon_state]-break", src)
-	holomap_markers -= HOLOMAP_MARKER_CULT_ALTAR+"_\ref[src]"
+	//holomap_markers -= HOLOMAP_MARKER_CULT_ALTAR+"_\ref[src]"
 	..()
 
 /obj/structure/cult/altar/attackby(var/obj/item/I, var/mob/user)
 	if(altar_task)
 		return ..()
-	if(istype(I,/obj/item/weapon/melee/soulblade) || (istype(I,/obj/item/weapon/melee/cultblade) && !istype(I,/obj/item/weapon/melee/cultblade/nocult)))
+	if(istype(I, /obj/item/weapon/melee/soulblade) || (istype(I, /obj/item/weapon/melee/cultblade) && !istype(I, /obj/item/weapon/melee/cultblade/nocult)))
 		if(blade)
 			to_chat(user,"<span class='warning'>You must remove \the [blade] planted into \the [src] first.</span>")
-			return 1
+			return TRUE
 		var/turf/T = get_turf(user)
-		playsound(T, 'sound/weapons/bloodyslice.ogg', 50, 1)
-		user.drop_item(I, T, 1)
+		playsound(T, 'sound/weapons/bloodyslice.ogg', 50, TRUE)
 		I.forceMove(src)
 		blade = I
 		update_icon()
 		var/mob/living/carbon/human/C = locate() in loc
 		if(C && C.resting)
-			C.unlock_from()
-			C.update_canmove()
-			lock_atom(C, lock_type)
-			C.apply_damage(blade.force, BRUTE, LIMB_CHEST)
+			//C.unlock_from()
+			//C.update_canmove()
+			//lock_atom(C, lock_type)
+			C.apply_damage(blade.force, BRUTE, BODY_ZONE_CHEST)
 			if(C == user)
 				user.visible_message("<span class='danger'>\The [user] holds \the [I] above their stomach and impales themselves on \the [src]!</span>","<span class='danger'>You hold \the [I] above your stomach and impale yourself on \the [src]!</span>")
 			else
@@ -229,30 +231,26 @@
 			if(istype(blade) && !blade.shade)
 				var/icon/logo_icon = icon('icons/logos.dmi', "shade-blade")
 				for(var/mob/M in observers)
-					if(!M.client || isantagbanned(M) || jobban_isbanned(M, CULTIST) || M.client.is_afk())
+					if(!M.client || jobban_isbanned(M, VGCULTIST) || M.client.is_afk())
 						continue
 					if(M.mind && M.mind.GetRole(CULTIST))
-						var/datum/role/cultist/cultist = M.mind.GetRole(CULTIST)
+						var/datum/antagonist/vgcultist/cultist = M.mind.GetRole(CULTIST)
 						if(cultist.second_chance)
 							to_chat(M, "[bicon(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, opening a small crack in the veil that allows you to become the blade's resident shade. (<a href='?src=\ref[src];signup=\ref[M]'>Possess now!</a>)</span>[bicon(logo_icon)]")
 		return TRUE
-	if(istype(I, /obj/item/weapon/grab))
+	if(user.pulling && ismob(owner.pulling))
 		if(blade)
 			to_chat(user,"<span class='warning'>You must remove \the [blade] planted on \the [src] first.</span>")
 			return TRUE
-		var/obj/item/weapon/grab/G = I
-		if(iscarbon(G.affecting))
-			var/mob/living/carbon/C = G.affecting
-			C.unlock_from()
-			if(!do_after(user,C,15))
-				return
-			if(ishuman(C))
-				C.resting = 1
-				C.update_canmove()
-			C.forceMove(loc)
-			qdel(G)
-			to_chat(user, "<span class='warning'>You move \the [C] on top of \the [src]</span>")
-			return TRUE
+		user.stop_pulling()
+		if(!do_after(user, C, 15))
+			return
+		if(ishuman(C))
+			C.resting = TRUE
+		C.forceMove(loc)
+		buckle_mob(C)
+		to_chat(user, "<span class='warning'>You move \the [C] on top of \the [src]</span>")
+		return TRUE
 	..()
 
 /obj/structure/cult/altar/update_icon()
@@ -335,7 +333,7 @@
 		if(ishuman(C))
 			C.resting = 1
 			C.update_canmove()
-		add_fingerprint(C)
+		add_fingerprint(C) 
 	O.forceMove(loc)
 	to_chat(user, "<span class='warning'>You move \the [O] on top of \the [src]</span>")
 

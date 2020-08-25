@@ -42,7 +42,7 @@ var/veil_thickness = CULT_PROLOGUE
 var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anchor stone
 
 ///////////////////////////////FACTION CODE - START/////////////////////////////////
-
+/*
 /datum/faction/vgcult
 	name = "Cult of Nar-Sie"
 	ID = BLOODCULT
@@ -75,9 +75,9 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 
 /datum/faction/vgcult/HandleRecruitedRole(var/datum/role/R)
 	. = ..()
-	if (cult_reminders.len)
+	if(cult_reminders.len)
 		to_chat(R.antag.current, "<span class='notice'>The other cultists have left some useful reminders for you. They will be stored in your memory.</span>")
-	for (var/reminder in cult_reminders)
+	for(var/reminder in cult_reminders)
 		R.antag.store_memory("Cult reminder: [reminder].")
 
 /datum/faction/vgcult/AdminPanelEntry(var/datum/admins/A)
@@ -291,7 +291,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 		var/obj/machinery/singularity/narsie/large/L = locate() in narsie_list //There should only be one
 		if(L.wounded)
 			. += "<BR><font color = 'green'><B>Though defeated, the crew managed to deal [L.wounded] damaging blows to \the [L].</B></font>"
-
+*/
 
 
 
@@ -732,7 +732,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 					to_chat(user, "<span class='danger'>There is no blood available. Not even in your own body!</span>")
 
 	//Blood is only consumed if there is enough of it
-	i (!data[BLOODCOST_FAILURE])
+	if(!data[BLOODCOST_FAILURE])
 		if(data[BLOODCOST_TARGET_HANDS])
 			data[BLOODCOST_TOTAL] += data[BLOODCOST_AMOUNT_HANDS]
 			var/mob/living/carbon/human/H = user
@@ -793,7 +793,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	source: the turf where the ritual that triggered ACT III took place if any. Serves as the location of the 5th Bloodstone if close enough from the station center.
 
 */
-/proc/spawn_bloodstones(var/turf/source = null)
+/proc/spawn_bloodstones(turf/source = null)
 	//Called at the beginning of ACT III, this is basically the cult's declaration of war on the crew
 	//Spawns 4 structures, one in each quarters of the station
 	//When spawning, those structures break and convert stuff around them, and add a wall layer in case of space exposure.

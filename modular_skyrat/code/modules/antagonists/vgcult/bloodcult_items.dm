@@ -1244,8 +1244,9 @@ var/list/arcane_tomes = list()
 		else
 			to_chat(user, "<span class='info'>Drinking blood from this cup will always safely replenish your own vessels, regardless of blood types. The opposite is true to non-cultists. Throwing this cup at them may force them to swallow some of its content if their face isn't covered.</span>")
 	var/mob/living/carbon/human/H = user
-	else if(!(NOBLOOD in H.dna.species.species_traits))
-		to_chat(user, "<span class='sinister'>Its contents look delicious though. Surely a sip won't hurt...</span>")
+	else if(NOBLOOD in H.dna.species_traits)
+		return
+	to_chat(user, "<span class='sinister'>Its contents look delicious though. Surely a sip won't hurt...</span>")
 
 /obj/item/weapon/reagent_containers/food/drinks/cult/on_reagent_change()
 	..()
@@ -1259,7 +1260,7 @@ var/list/arcane_tomes = list()
 	if(reagents.total_volume)
 		if(ishuman(hit_atom))
 			var/mob/living/carbon/human/H = hit_atom
-			if(!H.is_mouth_covered() && )
+			if(!H.is_mouth_covered())
 				H.visible_message("<span class='warning'>Some of \the [src]'s content spills into \the [H]'s mouth.</span>","<span class='danger'>Some of \the [src]'s content spills into your mouth.</span>")
 				reagents.reaction(H, INGEST)
 				reagents.trans_to(H, gulp_size)

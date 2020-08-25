@@ -1,3 +1,4 @@
+/*
 /obj/screen/holomap
 	name = "Holomap"
 
@@ -6,3 +7,4 @@
 	holomap = new /obj/screen/fullscreen()
 	holomap.name = "holomap"
 	holomap.icon = null
+*/

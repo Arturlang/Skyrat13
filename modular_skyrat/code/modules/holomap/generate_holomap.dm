@@ -1,3 +1,4 @@
+/*
 var/list/station_holomaps = list()
 
 /obj/machinery/station_map
@@ -451,3 +452,4 @@ var/list/station_holomaps = list()
 	legend.pixel_x = 3 * WORLD_ICON_SIZE
 	legend.pixel_y = 3 * WORLD_ICON_SIZE
 	station_map.overlays |= legend
+*/

@@ -3,7 +3,7 @@
 /proc/isvgcultist(mob/living/M, require_full_power = FALSE, holy_water_check = FALSE)
 	if(!istype(M))
 		return FALSE
-	var/datum/antagonist/cult/D = M?.mind?.has_antag_datum(/datum/antagonist/cult)
+	var/datum/antagonist/vgcultist/D = M?.mind?.has_antag_datum(/datum/antagonist/vgcultist)
 	return D && (!require_full_power || !D.neutered) && (!holy_water_check || !D.ignore_holy_water)
 /*
 /datum/team/cult/proc/is_sacrifice_target(datum/mind/mind)
@@ -48,10 +48,10 @@
 	<span class='notice'>Crew</span>: Prevent the cult from expanding and drive it out."
 	title_icon = "cult"
 
-	var/finished = 0
+	var/finished
 
 	var/acolytes_needed = 10 //for the survive objective
-	var/acolytes_survived = 0
+	var/acolytes_survived
 
 	var/list/cultists_to_cult = list() //the cultists we'll convert
 
@@ -102,7 +102,7 @@
 	if (!istype(cult_mind))
 		return FALSE
 
-	var/datum/antagonist/cult/new_cultist = new()
+	var/datum/antagonist/vgcultist/new_cultist = new()
 	new_cultist.give_equipment = equip
 
 	if(cult_mind.add_antag_datum(new_cultist))
@@ -112,7 +112,7 @@
 
 /datum/game_mode/proc/remove_vgcultist(datum/mind/cult_mind, silent, stun)
 	if(cult_mind.current)
-		var/datum/antagonist/cult/cult_datum = cult_mind.has_antag_datum(/datum/antagonist/cult)
+		var/datum/antagonist/vgcultist/cult_datum = cult_mind.has_antag_datum(/datum/antagonist/vgcultist)
 		if(!cult_datum)
 			return FALSE
 		cult_datum.silent = silent

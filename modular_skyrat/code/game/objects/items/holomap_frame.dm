@@ -1,3 +1,4 @@
+/*
 /obj/item/wallframe/station_map
 	name = "station holomap frame"
 	desc = "A virtual map of the station."
@@ -154,3 +155,4 @@
 		if(WEST)
 			pixel_x = -1 * WORLD_ICON_SIZE
 			pixel_y = 0
+*/
