@@ -29,7 +29,6 @@
 
 */
 
-var/veil_thickness = CULT_PROLOGUE
 
 //CULT_PROLOGUE		Default thickness, only communication and raise structure runes enabled.
 //CULT_ACT_I		Altar raised. cultists can now convert.
@@ -39,10 +38,81 @@ var/veil_thickness = CULT_PROLOGUE
 //CULT_EPILOGUE		The cult succeeded. The station is no longer reachable from space or through teleportation, and is now part of hell. Nar-Sie hunts the survivors.
 //CULT_MENDED		The cult failed (bloodstones all destroyed or rift closed). cult magic permanently disabled, living cultists progressively die by themselves.
 
-var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anchor stone
+GLOBAL_VAR_INIT(anchor_bloodstone, 0) // Keeps track of what stone becomes the anchor stone
+GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
+///////////////////////////////GAMEMODE CODE - START/////////////////////////////////
+#define CULT_SCALING_COEFFICIENT 9.3 //Roughly one new cultist at roundstart per this many players
 
+/datum/game_mode
+	var/list/datum/mind/vgcultists = list()
+
+
+/datum/game_mode/cult/vgcult
+	name = "vgcult"
+	config_tag = "vgcult"
+	antag_flag = ROLE_VGCULTIST
+	false_report_weight = 0 //To not spam the reports, as its a subtype of cult.
+
+
+/datum/game_mode/cult/vgcult/add_cultist(datum/mind/cult_mind, stun , equip = FALSE) //BASE
+	if(!istype(cult_mind))
+		return FALSE
+
+	var/datum/antagonist/vgcultist/new_cultist = new()
+	new_cultist.give_equipment = equip
+
+	if(cult_mind.add_antag_datum(new_cultist))
+		if(stun)
+			cult_mind.current.Unconscious(100)
+		return TRUE
+
+/datum/game_mode/cult/vgcult/remove_cultist(datum/mind/cult_mind, silent, stun)
+	if(cult_mind.current)
+		var/datum/antagonist/cult/cult_datum = cult_mind.has_antag_datum(/datum/antagonist/vgcultist)
+		if(!cult_datum)
+			return FALSE
+		cult_datum.silent = silent
+		cult_datum.on_removal()
+		if(stun)
+			cult_mind.current.Unconscious(100)
+		return TRUE
+
+/datum/game_mode/cult/proc/check_survive()
+	var/acolytes_survived = 0
+	for(var/datum/mind/cult_mind in vgcultists)
+		if (cult_mind.current && cult_mind.current.stat != DEAD)
+			if(cult_mind.current.onCentCom() || cult_mind.current.onSyndieBase())
+				acolytes_survived++
+	if(acolytes_survived>=acolytes_needed)
+		return FALSE
+	else
+		return TRUE
+
+/datum/game_mode/cult/vgcult/check_cult_victory()
+	return TRUE
+
+/datum/game_mode/cult/generate_credit_text()
+	var/list/round_credits = list()
+	var/len_before_addition
+
+	round_credits += "<center><h1>The Cult of Nar'Sie:</h1>"
+	len_before_addition = round_credits.len
+	for(var/datum/mind/cultist in vgcultists)
+		round_credits += "<center><h2>[cultist.name] as a cult fanatic</h2>"
+
+	var/datum/objective/eldergod/summon_objective = locate() in main_cult.objectives
+	if(summon_objective && summon_objective.summoned)
+		round_credits += "<center><h2>Nar'Sie as the eldritch abomination</h2>"
+
+	if(len_before_addition == round_credits.len)
+		round_credits += list("<center><h2>The cultists have learned the danger of eldritch magic!</h2>", "<center><h2>They all disappeared!</h2>")
+		round_credits += "<br>"
+
+	round_credits += ..()
+	return round_credits
+#undef CULT_SCALING_COEFFICIENT
 ///////////////////////////////FACTION CODE - START/////////////////////////////////
-/*
+/* We dont use factions for gamemode code.
 /datum/faction/vgcult
 	name = "Cult of Nar-Sie"
 	ID = BLOODCULT
@@ -159,7 +229,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 		veil_thickness = CULT_MENDED
 		..()
 		command_alert(/datum/command_alert/bloodstones_broken)
-		for(var/obj/structure/cult/bloodstone/B in bloodstone_list)
+		for(var/obj/structure/table/cult/bloodstone/B in bloodstone_list)
 			B.takeDamage(B.maxHealth+1)
 		for(var/obj/effect/rune/R in rune_set.rune_list)
 			R.update_icon()
@@ -241,7 +311,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 		for(var/datum/role/cultist/C in members)
 			C.update_cult_hud()
 
-		for(var/obj/structure/cult/spire/S in cult_spires)//spires update their appearance on Act 2 and 3, signaling new available tattoos.
+		for(var/obj/structure/table/cult/spire/S in cult_spires)//spires update their appearance on Act 2 and 3, signaling new available tattoos.
 			S.upgrade()
 
 		for(var/obj/effect/rune/R in rune_set.rune_list)//runes now available will start pulsing
@@ -259,7 +329,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	if(T && (T.z == map.zMainStation))//F I V E   T I L E S
 		if(!(locate("\ref[T]") in bloody_floors))
 			bloody_floors[T] = T
-			for (var/obj/structure/cult/bloodstone/B in bloodstone_list)
+			for (var/obj/structure/table/cult/bloodstone/B in bloodstone_list)
 				B.update_icon()
 			var/datum/objective/bloodcult_bloodbath/O = locate() in objective_holder.objectives
 			if(O && !O.IsFulfilled())
@@ -271,7 +341,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 /datum/faction/vgcult/proc/remove_bloody_floor(var/turf/T)
 	if(!istype(T))
 		return
-	for(var/obj/structure/cult/bloodstone/B in bloodstone_list)
+	for(var/obj/structure/table/cult/bloodstone/B in bloodstone_list)
 		B.update_icon()
 	bloody_floors -= T
 
@@ -383,10 +453,10 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 		return data
 
 	//Is the cultist currently grabbing a bleeding mob/corpse that still has blood in it?
-	var/obj/item/weapon/grab/Grab = locate() in user
-	if(Grab)
-		if(ishuman(Grab.affecting))
-			var/mob/living/carbon/human/H = Grab.affecting
+
+	if(user.pulling && ismob(user.pulling))
+		if(ishuman(user.pulling))
+			var/mob/living/carbon/human/H = user.pulling
 			if(!(H.species.anatomy_flags & NO_BLOOD))
 				for(var/datum/organ/external/org in H.organs)
 					if(org.status & ORGAN_BLEEDING)
@@ -749,7 +819,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 			var/mob/living/carbon/human/H = data[BLOODCOST_TARGET_GRAB]
 			H.vessel.remove_reagent(BLOOD, data[BLOODCOST_AMOUNT_GRAB])
 			H.take_overall_damage(data[BLOODCOST_AMOUNT_GRAB] ? 0.1 : 0)
-		i(data[BLOODCOST_TARGET_BLEEDER])
+		if(data[BLOODCOST_TARGET_BLEEDER])
 			data[BLOODCOST_TOTAL] += data[BLOODCOST_AMOUNT_BLEEDER]
 			var/mob/living/carbon/human/H = data[BLOODCOST_TARGET_BLEEDER]
 			H.vessel.remove_reagent(BLOOD, data[BLOODCOST_AMOUNT_BLEEDER])
@@ -800,8 +870,8 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	var/list/places_to_spawn = list()
 	for(var/i = 1 to 4)
 		for (var/j = 10; j > 0; j--)
-			var/turf/T = get_turf(pick(range(j*3,locate(map.center_x+j*4*(((round(i/2) % 2) == 0) ? -1 : 1 ),map.center_y+j*4*(((i % 2) == 0) ? -1 : 1 ),map.zMainStation))))
-			if(!is_type_in_list(T,list(/turf/space,/turf/unsimulated,/turf/simulated/shuttle)))
+			var/turf/T = get_turf(pick(range(j * 3, locate(map.center_x + j * 4 * (((round(i / 2) % 2) == 0) ? -1 : 1 ),map.center_y+ j * 4 * (((i % 2) == 0) ? -1 : 1 ),map.zMainStation))))
+			if(!is_type_in_list(T, list(/turf/open/space, /turf/simulated/shuttle)))
 				//Adding some blacklisted areas, specifically solars
 				if(!istype(T.loc,/area/solar))
 					places_to_spawn += T
@@ -810,11 +880,11 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	if(source && (source.z == map.zMainStation) && !isspace(source.loc) && !is_on_shuttle(source) && get_dist(locate(map.center_x,map.center_y,map.zMainStation),source)<100)
 		places_to_spawn.Add(source)
 	for(var/T in places_to_spawn)
-		new /obj/structure/cult/bloodstone(T)
+		new /obj/structure/table/cult/bloodstone(T)
 
 	//Cultists can use those bloodstones to locate the rest of them, they work just like station holomaps
 
-	for(var/obj/structure/cult/bloodstone/B in bloodstone_list)
+	for(var/obj/structure/table/cult/bloodstone/B in bloodstone_list)
 		if (!B.loc)
 			qdel(B)
 			message_admins("Blood Cult: A blood stone was somehow spawned in nullspace. It has been destroyed.")
@@ -825,6 +895,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 
 */
 //Instead of updating in realtime, cult holomaps update every time you check them again, saves some CPU.
+/*
 /proc/prepare_cult_holomap()
 	var/image/I = image(extraMiniMaps[HOLOMAP_EXTRA_CULTMAP])
 	for(var/marker in holomap_markers)
@@ -841,12 +912,12 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 			markerImage.appearance_flags = RESET_COLOR
 			I.overlays += markerImage
 	return I
-
+*/
 /*	cult_risk
 	M: the cultist responsible for the ritual that called this proc, so they get a warning message if they didn't trigger the announcement
 
 */
-/proc/cult_risk(var/mob/M)//too many conversions/soul-stoning might bring the cult to the attention of Nanotrasen prematurely
+/proc/cult_risk(mob/M)//too many conversions/soul-stoning might bring the cult to the attention of Nanotrasen prematurely
 	var/datum/faction/vgcult/cult = find_active_faction_by_type(/datum/faction/vgcult)
 	if(!cult)
 		return
@@ -858,7 +929,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	var/living_cultists = 0
 	var/living_noncultists = 0
 	for(var/mob/living/L in player_list)
-		if(issilicon(L)||isborer(L))
+		if(issilicon(L))
 			continue
 		if(L.stat != DEAD)
 			if(isvgcultist(L))
@@ -869,7 +940,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 	var/rate = 40//the percent of living cultist at which the risk starts appearing
 	var/risk = min((living_cultists*((100-rate)/50) - living_noncultists*(rate/50)) * 25, 100)//the risk increases very rapidly. at 2-3 cultists over the limit, the exposure is guarranted
 
-	if (risk > 0)
+	if(risk > 0)
 		if(prob(risk))
 			message_admins("With a chance of [risk]% ([living_cultists] Cultists vs [living_noncultists] non-cultists), the cult's activities have been prematurely exposed.")
 			log_admin("With a chance of [risk]% ([living_cultists] Cultists vs [living_noncultists] non-cultists), the cult's activities have been prematurely exposed.")
@@ -886,7 +957,7 @@ var/global/global_anchor_bloodstone // Keeps track of what stone becomes the anc
 
 */
 /obj/item/proc/get_cult_power()
-	return 0
+	return FALSE
 
 var/static/list/valid_cultpower_slots = list(
 	slot_wear_suit,
@@ -899,10 +970,10 @@ var/static/list/valid_cultpower_slots = list(
 
 */
 /mob/proc/get_cult_power()
-	var/power = 0
-	for (var/slot in valid_cultpower_slots)
+	var/power
+	for(var/slot in valid_cultpower_slots)
 		var/obj/item/I = get_item_by_slot(slot)
-		if (istype(I))
+		if(istype(I))
 			power += I.get_cult_power()
 
 	return power
@@ -918,17 +989,17 @@ var/static/list/valid_cultpower_slots = list(
 
 	veil_thickness = input(usr, "Enter a value (default = [CULT_PROLOGUE])", "Debug Veil Thickness", veil_thickness) as num
 
-	if (veil_thickness == CULT_ACT_III)
+	if(veil_thickness == CULT_ACT_III)
 		spawn_bloodstones()
 
 	var/datum/faction/vgcult/cult = find_active_faction_by_type(/datum/faction/vgcult)
-	if (cult)
-		for (var/datum/role/cultist/C in cult.members)
+	if(cult)
+		for(var/datum/role/cultist/C in cult.members)
 			C.update_cult_hud()
 
-	for (var/obj/structure/cult/spire/S in cult_spires)
+	for(var/obj/structure/table/cult/spire/S in cult_spires)
 		S.upgrade()
 
 	var/datum/runeset/bloodcult_runeset = global_runesets["blood_cult"]
-	for (var/obj/effect/rune/R in bloodcult_runeset.rune_list)
+	for(var/obj/effect/rune/R in bloodcult_runeset.rune_list)
 		R.update_icon()

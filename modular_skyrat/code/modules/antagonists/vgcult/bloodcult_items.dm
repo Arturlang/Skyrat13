@@ -517,7 +517,7 @@ var/list/arcane_tomes = list()
 		return ..()
 	if(isvgcultist(user))
 		if(ishuman(target) && target.resting)
-			var/obj/structure/cult/altar/altar = locate() in target.loc
+			var/obj/structure/table/cult/altar/altar = locate() in target.loc
 			if(altar)
 				altar.attackby(src,user)
 				return
@@ -697,7 +697,7 @@ var/list/arcane_tomes = list()
 			user.UpdateDamageIcon()
 		return
 	if(ishuman(target) && target.resting)
-		var/obj/structure/cult/altar/altar = locate() in target.loc
+		var/obj/structure/table/cult/altar/altar = locate() in target.loc
 		if (altar)
 			altar.attackby(src,user)
 			return

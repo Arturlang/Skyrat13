@@ -11,12 +11,12 @@
 	bearer = M
 
 /mob/proc/checkTattoo(var/tattoo_name)
-	if (!tattoo_name)
+	if(!tattoo_name)
 		return
-	if (!isvgcultist(src))
+	if(!isvgcultist(src))
 		return
-	var/datum/role/cultist/C = mind.GetRole(CULTIST)
-	for (var/tattoo in C.tattoos)
+	var/datum/antagonist/vgcultist/D = M.mind.has_antag_datum(/datum/antagonist/vgcultist)
+	for(var/tattoo in C.tattoos)
 		var/datum/cult_tattoo/CT = C.tattoos[tattoo]
 		if (CT.name == tattoo_name)
 			return CT
@@ -37,8 +37,8 @@ var/list/blood_communion = list()
 
 /datum/cult_tattoo/bloodpool/getTattoo(var/mob/M)
 	..()
-	if (isvgcultist(M))
-		blood_communion.Add(M.mind.GetRole(CULTIST))
+	if(isvgcultist(M))
+		blood_communion.Add(M.mind.has_antag_datum(ROLE_VGCULTIST))
 
 /datum/cult_tattoo/silent
 	name = TATTOO_SILENT
@@ -52,9 +52,9 @@ var/list/blood_communion = list()
 	icon_state = "dagger"
 	tier = 1
 
-/datum/cult_tattoo/dagger/getTattoo(var/mob/M)
+/datum/cult_tattoo/dagger/getTattoo(mob/M)
 	..()
-	if (M.mind && M.mind.GetRole(CULTIST))
+	if (M.mind &&M.mind.has_antag_datum(ROLE_VGCULTIST))
 		M.add_spell(new /spell/cult/blood_dagger, "cult_spell_ready", /obj/abstract/screen/movable/spell_master/bloodcult)
 
 
@@ -78,7 +78,7 @@ var/list/blood_communion = list()
 
 /datum/cult_tattoo/memorize/getTattoo(var/mob/M)
 	..()
-	if (M.mind && M.mind.GetRole(CULTIST))
+	if(M.mind && M.mind.has_antag_datum(ROLE_VGCULTIST))
 		M.add_spell(new /spell/cult/arcane_dimension, "cult_spell_ready", /obj/abstract/screen/movable/spell_master/bloodcult)
 
 /datum/cult_tattoo/chat
@@ -98,29 +98,17 @@ var/list/blood_communion = list()
 	desc = "Acquire a new, fully healed body that cannot feel pain."
 	icon_state = "manifest"
 	tier = 3
-
+//This used to make you look really generic, why not let us keep our hair?
 /datum/cult_tattoo/manifest/getTattoo(var/mob/M)
 	..()
 	var/mob/living/carbon/human/H = bearer
-	if (!istype(H))
+	if(!istype(H))
 		return
 	H.set_species("Manifested")
-	H.my_appearance.r_hair = 90
-	H.my_appearance.g_hair = 90
-	H.my_appearance.b_hair = 90
-	H.my_appearance.r_facial = 90
-	H.my_appearance.g_facial = 90
-	H.my_appearance.b_facial = 90
-	H.my_appearance.r_eyes = 255
-	H.my_appearance.g_eyes = 0
-	H.my_appearance.b_eyes = 0
-	H.revive(0)
-	H.status_flags &= ~GODMODE
-	H.status_flags &= ~CANSTUN
-	H.status_flags &= ~CANKNOCKDOWN
-	H.status_flags &= ~CANPARALYSE
-	H.fixblood()
-	H.regenerate_icons()
+	//H.my_appearance.r_hair = 90
+	H.eye_color = BLOODCULT_EYE
+	fully_heal() //Lets not use revive just in case
+
 
 /datum/cult_tattoo/fast
 	name = TATTOO_FAST

@@ -311,11 +311,11 @@
 	 inside a Construct Shell, or a Cult Blade. Lastly, raising an Arcaneum will let you permanently imbue your skin with a gift from Nar Sie. Follow your purpose \
 	 and you may see even more gifts come your way."
 	var/turf/loc_memory = null
-	var/spawntype = /obj/structure/cult/altar
+	var/spawntype = /obj/structure/table/cult/altar
 
 /datum/rune_spell/blood_cult/raisestructure/proc/proximity_check()
 	var/obj/effect/rune/R = spell_holder
-	if (locate(/obj/structure/cult) in range(R.loc,1))
+	if (locate(/obj/structure/table/cult) in range(R.loc,1))
 		abort(RITUALABORT_BLOCKED)
 		return FALSE
 
@@ -360,11 +360,11 @@
 
 	switch(structure)
 		if("Altar")
-			spawntype = /obj/structure/cult/altar
+			spawntype = /obj/structure/table/cult/altar
 		if("Spire")
-			spawntype = /obj/structure/cult/spire
+			spawntype = /obj/structure/table/cult/spire
 		if("Forge")
-			spawntype = /obj/structure/cult/forge
+			spawntype = /obj/structure/table/cult/forge
 		if("Spire (locked)")
 			to_chat(user,"Reach Act 1 to unlock the Spire. It allows human cultists to acquire Arcane Tattoos, providing various buffs.")
 			abort()
@@ -461,7 +461,7 @@
 
 /datum/rune_spell/blood_cult/raisestructure/proc/success()
 	new spawntype(spell_holder.loc)
-	if (spawntype == /obj/structure/cult/altar)
+	if (spawntype == /obj/structure/table/cult/altar)
 		var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
 		if(cult)
 			cult.stage(CULT_ACT_I)
@@ -1498,7 +1498,7 @@ var/list/blind_victims = list()
 	to_chat(activator, "<span class='notice'>All runes and cult structures in range hide themselves behind a thin layer of reality.</span>")
 	playsound(T, 'sound/effects/conceal.ogg', 50, 0, -4)
 
-	for(var/obj/structure/cult/S in range(effect_range,T))
+	for(var/obj/structure/table/cult/S in range(effect_range,T))
 		var/dist = cheap_pythag(S.x - T.x, S.y - T.y)
 		if (S.conceal_cooldown)
 			continue
@@ -1554,7 +1554,7 @@ var/list/blind_victims = list()
 	to_chat(activator, "<span class='notice'>All concealed runes and cult structures in range phase back into reality, stunning nearby foes.</span>")
 	playsound(T, 'sound/effects/reveal.ogg', 50, 0, -2)
 
-	for(var/obj/structure/cult/concealed/S in range(effect_range,T))//only concealed structures trigger the effect
+	for(var/obj/structure/table/cult/concealed/S in range(effect_range,T))//only concealed structures trigger the effect
 		var/dist = cheap_pythag(S.x - T.x, S.y - T.y)
 		if (dist <= effect_range+0.5)
 			anim(target = S, a_icon = 'icons/effects/224x224.dmi', flick_anim = "rune_reveal", lay = NARSIE_GLOW, offX = -WORLD_ICON_SIZE*shock_range, offY = -WORLD_ICON_SIZE*shock_range, plane = LIGHTING_PLANE)

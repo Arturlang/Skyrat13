@@ -40,12 +40,12 @@
 
 [bloodcult_buildings.dm]
 
-	* /obj/structure/cult
+	* /obj/structure/table/cult
 		> procs
 			* conceal
-				-> hides the structure inside an invisible /obj/structure/cult/concealed
+				-> hides the structure inside an invisible /obj/structure/table/cult/concealed
 			* reveal
-				-> removes /obj/structure/cult/concealed and pulls out the concealed structure
+				-> removes /obj/structure/table/cult/concealed and pulls out the concealed structure
 			* takeDamage
 				-> called by anything that can deal damage to cult structures. handles its destruction.
 			* cultist_act

@@ -1,12 +1,11 @@
 
-
-/obj/structure/
 /obj/structure/cult
 	density = TRUE
 	anchored = TRUE
 	icon = 'icons/obj/cult.dmi'
 	max_integrity = 50
 	obj_integrity = 50
+	can_buckle = TRUE
 	var/sound_damaged
 	var/sound_destroyed
 	var/conceal_cooldown = 0
@@ -50,7 +49,7 @@
 /obj/structure/cult/concealed/conceal()
 	return
 
-/* A snowflake proc for indescrutability, really?
+/* 
 //if you want indestructible buildings, just make a custom takeDamage() proc
 /obj/structure/cult/proc/takeDamage(damage)
 	health -= damage
@@ -113,7 +112,7 @@
 			..()
 */
 
-/obj/structure/cult/attack_paw(var/mob/user)
+/obj/structure/cult/attack_paw(mob/user)
 	return attack_hand(user)
 
 /obj/structure/cult/attack_hand(var/mob/living/user)
@@ -124,22 +123,22 @@
 	else
 		noncultist_act(user)
 
-/obj/structure/cult/proc/cultist_act(var/mob/user)
+/obj/structure/cult/proc/cultist_act(mob/user)
 	return TRUE
 
-/obj/structure/cult/proc/noncultist_act(var/mob/user)
+/obj/structure/cult/proc/noncultist_act(mob/user)
 	to_chat(user,"<span class='sinister'>You feel madness taking its toll, trying to figure out \the [name]'s purpose</span>")
 	if(!ishuman(user))
 		return TRUE
 	var/mob/living/carbon/human/H = user
-	if(!H.is_hallucinating)
-		H.hallucinating += 10
+	if(!H.hallucinating())
+		H.hallucination += 10
 	return TRUE
 
-/obj/structure/cult/attack_construct(var/mob/user)
+/obj/structure/cult/attack_construct(mob/user)
 	if(!Adjacent(user))
 		return FALSE
-	if(istype(user,/mob/living/simple_animal/construct/builder))
+	if(istype(user, /mob/living/simple_animal/construct/builder))
 		cultist_act(user)
 		return TRUE
 	return FALSE
@@ -158,9 +157,12 @@
 	desc = "A bloodstained altar dedicated to Nar-Sie."
 	icon_state = "altar"
 	max_integrity = 100
+	layer = TABLE_LAYER
+	climbable = TRUE
+	obj_flags = CAN_BE_HIT|SHOVABLE_ONTO
+	pass_flags = LETPASSTHROW
 	sound_damaged = 'sound/effects/stone_hit.ogg'
 	sound_destroyed = 'sound/effects/stone_crumble.ogg'
-	layer = TABLE_LAYER
 	var/obj/item/weapon/melee/soulblade/blade = null
 	var/lock_type = /datum/locking_category/buckle/bed
 	var/altar_task = ALTARTASK_NONE
@@ -174,9 +176,10 @@
 /obj/structure/cult/altar/New()
 	..()
 	flick("[icon_state]-spawn", src)
-	var/image/I = image(icon, "altar_overlay")
-	I.plane = ABOVE_MOB_LAYER
-	overlays.Add(I)
+	//var/image/I = image(icon, "altar_overlay")
+	add_overlay("altar_overlay")
+	//I.layer = ABOVE_ALL_MOB_LAYER
+	//overlays.Add(I)
 	for(var/mob/living/carbon/C in loc)
 		Crossed(C)
 /* Holomaps incompelete
@@ -230,18 +233,20 @@
 			to_chat(user, "You plant \the [blade] on top of \the [src]</span>")
 			if(istype(blade) && !blade.shade)
 				var/icon/logo_icon = icon('icons/logos.dmi', "shade-blade")
-				for(var/mob/M in observers)
-					if(!M.client || jobban_isbanned(M, VGCULTIST) || M.client.is_afk())
+				for(var/mob/dead/observer/O in GLOB.dead_mob_list)
+					if(!O.client || jobban_isbanned(O, VGCULTIST) || O.client.is_afk())
 						continue
-					if(M.mind && M.mind.GetRole(CULTIST))
-						var/datum/antagonist/vgcultist/cultist = M.mind.GetRole(CULTIST)
+					if(O?.mind && O.mind.has_antag_datum(/datum/antagonist/vgcultist))
+						var/datum/antagonist/vgcultist/cultist = O.mind.has_antag_datum(ROLE_VGCULTIST)
 						if(cultist.second_chance)
-							to_chat(M, "[bicon(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, opening a small crack in the veil that allows you to become the blade's resident shade. (<a href='?src=\ref[src];signup=\ref[M]'>Possess now!</a>)</span>[bicon(logo_icon)]")
+							to_chat(O, "[bicon(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, opening a small crack in the veil that allows you to become the blade's resident shade. (<a href='?src=\ref[src];signup=\ref[O]'>Possess now!</a>)</span>[bicon(logo_icon)]")
 		return TRUE
-	if(user.pulling && ismob(owner.pulling))
+	if(user.pulling && ismob(user.pulling))
 		if(blade)
 			to_chat(user,"<span class='warning'>You must remove \the [blade] planted on \the [src] first.</span>")
 			return TRUE
+		user.pulling.forceMove(src.loc)
+		var/mob/living/carbon/human/C = locate() in loc
 		user.stop_pulling()
 		if(!do_after(user, C, 15))
 			return
@@ -264,11 +269,11 @@
 			I = image(icon, "altar-soulblade-full")
 		else
 			I = image(icon, "altar-soulblade")
-		I.plane = ABOVE_HUMAN_PLANE
+		I.layer = ABOVE_ALL_MOB_LAYER
 		I.pixel_y = 3
 		overlays.Add(I)
 	var/image/I = image(icon, "altar_overlay")
-	I.plane = ABOVE_HUMAN_PLANE
+	I.layer = ABOVE_ALL_MOB_LAYER
 	overlays.Add(I)
 
 	if(obj_integrity < max_integrity/3)
@@ -277,73 +282,37 @@
 		overlays.Add("altar_damage1")
 
 //We want people on top of the altar to appear slightly higher
-/obj/structure/cult/altar/Crossed(var/atom/movable/mover)
+/obj/structure/cult/altar/Crossed(atom/movable/mover)
 	if(iscarbon(mover))
 		mover.pixel_y += 7 * PIXEL_MULTIPLIER
 
-/obj/structure/cult/altar/Uncrossed(var/atom/movable/mover)
+/obj/structure/cult/altar/Uncrossed(atom/movable/mover)
 	if(iscarbon(mover))
 		mover.pixel_y -= 7 * PIXEL_MULTIPLIER
 
 //They're basically the height of regular tables
-/obj/structure/cult/altar/Cross(var/atom/movable/mover, var/turf/target, var/height=1.5, var/air_group = 0)
-	if(air_group || (height==0))
-		return TRUE
-
-	if(ismob(mover))
-		var/mob/M = mover
-		if(M.flying)
-			return TRUE
-	if(istype(mover) && mover.checkpass(PASSTABLE))
-		return TRUE
+/obj/structure/table/CanPass(atom/movable/mover, turf/target)
+	if(istype(mover) && (mover.pass_flags & PASSTABLE))
+		return 1
+	if(mover.throwing)
+		return 1
+	if(locate(/obj/structure/table) in get_turf(mover))
+		return 1
 	else
-		return FALSE
+		return !density
 
-/obj/structure/cult/altar/MouseDropTo(var/atom/movable/O, var/mob/user)
-	if(altar_task)
-		return
-	if(!istype(O))
-		return
-	if(!O.anchored && (istype(O, /obj/item) || user.get_active_hand() == O))
-		if(!user.drop_item(O))
-			return
-	else
-		if(!ismob(O))
-			return
-		if(O.loc == user || !isturf(O.loc) || !isturf(user.loc))
-			return
-		if(user.incapacitated() || user.lying)
-			return
-		if(O.anchored || !Adjacent(user) || !user.Adjacent(src))
-			return
-		if(istype(O, /mob/living/simple_animal) || istype(O, /mob/living/silicon))
-			return
-		if(!user.loc)
-			return
-		var/mob/living/L = O
-		if(!istype(L) || L.locked_to || L == user)
-			return
-		if(blade)
-			to_chat(user,"<span class='warning'>You must remove \the [blade] planted on \the [src] first.</span>")
-			return TRUE
-		var/mob/living/carbon/C = O
-		if(!do_after(user,C,15))
-			return
-		C.unlock_from()
-		if(ishuman(C))
-			C.resting = 1
-			C.update_canmove()
-		add_fingerprint(C) 
-	O.forceMove(loc)
-	to_chat(user, "<span class='warning'>You move \the [O] on top of \the [src]</span>")
-
+/obj/structure/table/CanAStarPass(ID, dir, caller)
+	. = !density
+	if(ismovable(caller))
+		var/atom/movable/mover = caller
+		. = . || (mover.pass_flags & PASSTABLE)
 
 /obj/structure/cult/altar/proc/checkPosition()
 	for(var/mob/M in watching_mobs)
 		if(get_dist(src,M) > 1)
 			stopWatching(M)
 
-/obj/structure/cult/altar/proc/stopWatching(var/mob/user)
+/obj/structure/cult/altar/proc/stopWatching(mob/user)
 	if(!user)
 		for(var/mob/M in watching_mobs)
 			if(M.client)
@@ -378,7 +347,7 @@
 	for(var/mob/living/carbon/C in loc)
 		Crossed(C)
 
-/obj/structure/cult/altar/cultist_act(var/mob/user,var/menu="default")
+/obj/structure/cult/altar/cultist_act(mob/user, menu = "default")
 	.=..()
 	if(!.)
 		return
@@ -404,27 +373,31 @@
 			list("Sacrifice", "radial_altar_sacrifice", "Initiate the sacrifice ritual. The ritual can only proceed if the proper victim has been nailed to the altar."),
 			)
 		var/task = show_radial_menu(user,loc,choices,'icons/obj/cult_radial3.dmi',"radial-cult2")
-		if(!is_locking(lock_type) || !Adjacent(user) || !task)
+		if(!has_buckled_mobs() || !Adjacent(user) || !task)
 			return
 		switch(task)
 			if("Remove Blade")
-				var/mob/M = get_locked(lock_type)[1]
-				if(M != user)
-					if(do_after(user,src,20))
-						M.visible_message("<span class='notice'>\The [M] was freed from \the [src] by \the [user]!</span>","You were freed from \the [src] by \the [user].")
-						unlock_atom(M)
+				if(can_buckle && has_buckled_mobs())
+					for(var/U in buckled_mobs)
+						if(U != user)
+							return
+					var/unbuckled = input(src, "Who do you wish to unbuckle?", "Unbuckle Who?") as null|mob in buckled_mobs
+					if(do_after(user, src, 20))
+						unbuckled.visible_message("<span class='notice'>\The [unbuckled] was freed from \the [src] by \the [user]!</span>", "You were freed from \the [src] by \the [user].")
+						C.user_unbuckle_mob(unbuckled, src)
 						if(blade)
 							blade.forceMove(loc)
 							blade.attack_hand(user)
 							to_chat(user, "<span class='warning'>You remove \the [blade] from \the [src]</span>")
 							blade = null
-							playsound(loc, 'sound/weapons/blade1.ogg', 50, 1)
+							playsound(loc, 'sound/weapons/blade1.ogg', 50, TRUE)
 							update_icon()
 			if("Sacrifice")
 				var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
 				if(cult)
 					var/datum/objective/bloodcult_sacrifice/O = locate() in cult.objective_holder.objectives
-					if(O && is_locking(lock_type))
+					if(O && has_buckled_mobs())
+						var/mob/M = buckled_mobs
 						var/mob/victim = get_locked(lock_type)[1]
 						if(victim == O.sacrifice_target || (victim.mind && victim.mind == O.sacrifice_mind))
 							altar_task = ALTARTASK_SACRIFICE
@@ -446,13 +419,13 @@
 							if(user.client)
 								user.client.images |= progbar
 							safe_space()
-							for(var/mob/M in range(src,40))
+							for(var/mob/M in range(src, 40))
 								if(M.z == z && M.client)
-									if(get_dist(M,src)<=20)
-										M.playsound_local(src, get_sfx("explosion"), 50, 1)
+									if(get_dist(M, src) <= 20)
+										M.playsound_local(src, get_sfx("explosion"), 50, TRUE)
 										shake_camera(M, 2, 1)
 									else
-										M.playsound_local(src, 'sound/effects/explosionfar.ogg', 50, 1)
+										M.playsound_local(src, 'sound/effects/explosionfar.ogg', 50, TRUE)
 										shake_camera(M, 1, 1)
 							spawn()
 								dance_start()
@@ -464,7 +437,7 @@
 		blade.attack_hand(user)
 		to_chat(user, "You remove \the [blade] from \the [src]</span>")
 		blade = null
-		playsound(loc, 'sound/weapons/blade1.ogg', 50, 1)
+		playsound(loc, 'sound/weapons/blade1.ogg', 50, TRUE)
 		update_icon()
 		return
 	else
@@ -475,7 +448,7 @@
 			list("Conjure Soul Gem", "radial_altar_gem", "Order the altar to sculpt you a Soul Gem, to capture the soul of your enemies."),
 			)
 		var/task = show_radial_menu(user,loc,choices,'icons/obj/cult_radial3.dmi',"radial-cult2")
-		if(is_locking(lock_type) || !Adjacent(user) || !task)
+		if(has_buckled_mobs() || !Adjacent(user) || !task)
 			return
 		switch(task)
 			if("Consult Roster")
@@ -483,7 +456,7 @@
 				if(!cult)
 					return
 				var/dat = {"<body style="color:#FFFFFF" bgcolor="#110000"><ul>"}
-				for(var/datum/role/cultist/C in cult.members)
+				for(var/datum/antagonist/vgcultist/C in cult.members)
 					var/datum/mind/M = C.antag
 					var/conversion = ""
 					if(C.conversion.len > 0)
@@ -505,9 +478,9 @@
 					var/mob/living/carbon/H = C.antag.current
 					var/extra = ""
 					if(H && istype(H))
-						if(H.isInCrit())
+						if(H.health < HEALTH_THRESHOLD_CRIT && H.health > H.HEALTH_THRESHOLD_DEAD)
 							extra = " - <span style='color:#FF0000'>CRITICAL</span>"
-						else if(H.isDead())
+						else if(H.health < H.HEALTH_THRESHOLD_DEAD)
 							extra = " - <span style='color:#FF0000'>DEAD</span>"
 					dat += "<li><b>[M.name]</b></li> - [origin_text][extra]"
 				dat += {"</ul></body>"}
@@ -519,11 +492,11 @@
 						var/image/personnal_I = prepare_cult_holomap()
 						var/turf/T = get_turf(src)
 						if(map.holomap_offset_x.len >= T.z)
-							holomap_datum.cursor.pixel_x = (T.x-8+map.holomap_offset_x[T.z])*PIXEL_MULTIPLIER
-							holomap_datum.cursor.pixel_y = (T.y-8+map.holomap_offset_y[T.z])*PIXEL_MULTIPLIER
+							holomap_datum.cursor.pixel_x = (T.x-8+map.holomap_offset_x[T.z]) * PIXEL_MULTIPLIER
+							holomap_datum.cursor.pixel_y = (T.y-8+map.holomap_offset_y[T.z]) * PIXEL_MULTIPLIER
 						else
-							holomap_datum.cursor.pixel_x = (T.x-8)*PIXEL_MULTIPLIER
-							holomap_datum.cursor.pixel_y = (T.y-8)*PIXEL_MULTIPLIER
+							holomap_datum.cursor.pixel_x = (T.x-8) * PIXEL_MULTIPLIER
+							holomap_datum.cursor.pixel_y = (T.y-8) * PIXEL_MULTIPLIER
 						if(T.z == STATION_Z)
 							personnal_I.overlays += holomap_datum.cursor
 						watcher_maps["\ref[user]"] = personnal_I
@@ -616,7 +589,7 @@
 	if(is_locking(lock_type))
 		var/mob/M = get_locked(lock_type)[1]
 		if(M != user)
-			if(do_after(user,src,20))
+			if(do_after(user, src, 20))
 				M.visible_message("<span class='notice'>\The [M] was freed from \the [src] by \the [user]!</span>","You were freed from \the [src] by \the [user].")
 				unlock_atom(M)
 				if(blade)
@@ -624,14 +597,14 @@
 					blade.attack_hand(user)
 					to_chat(user, "You remove \the [blade] from \the [src]</span>")
 					blade = null
-					playsound(loc, 'sound/weapons/blade1.ogg', 50, 1)
+					playsound(loc, 'sound/weapons/blade1.ogg', 50, TRUE)
 					update_icon()
 	else if(blade)
 		blade.forceMove(loc)
 		blade.attack_hand(user)
 		to_chat(user, "You remove \the [blade] from \the [src]</span>")
 		blade = null
-		playsound(loc, 'sound/weapons/blade1.ogg', 50, 1)
+		playsound(loc, 'sound/weapons/blade1.ogg', 50, TRUE)
 		update_icon()
 		return
 	else
@@ -680,7 +653,7 @@
 		update_icon()
 		//Automatically makes them cultists
 		var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
-		if (!cult)
+		if(!cult)
 			cult = ticker.mode.CreateFaction(/datum/faction/bloodcult, null, 1)
 		var/datum/role/cultist/newCultist = cult.HandleRecruitedMind(shadeMob.mind, TRUE)
 		newCultist.Greet(GREET_SOULBLADE)
@@ -699,7 +672,7 @@
 		var/mob/M = get_locked(lock_type)[1]
 
 		if(istype(blade) && !blade.shade)//If an empty soul blade was the tool used for the ritual, let's make them its shade.
-			var/mob/living/simple_animal/shade/new_shade = M.change_mob_type( /mob/living/simple_animal/shade , null, null, 1 )
+			var/mob/living/simple_animal/shade/new_shade = M.change_mob_type( /mob/living/simple_animal/shade , null, null, 1)
 			blade.forceMove(loc)
 			blade.blood = blade.maxblood
 			new_shade.forceMove(blade)
@@ -722,7 +695,7 @@
 			new_shade.name = "[M.real_name] the Shade"
 			new_shade.real_name = "[M.real_name]"
 			new_shade.give_blade_powers()
-			playsound(get_turf(src), get_sfx("soulstone"), 50,1)
+			playsound(get_turf(src), get_sfx("soulstone"), 50, TRUE)
 		else
 			M.gib()
 		var/turf/T = loc
@@ -732,7 +705,7 @@
 			if(emergency_shuttle.direction == 2) // Going to centcomm
 				cult.minor_victory()
 			else
-				cult.stage(CULT_ACT_III,T)
+				cult.stage(CULT_ACT_III, T)
 		else
 			message_admins("Blood Cult: A sacrifice was completed...but we cannot find the cult faction...")//failsafe in case of admin varedit fuckery
 		qdel(src)
@@ -760,7 +733,6 @@ var/list/cult_spires = list()
 	sound_damaged = 'sound/effects/stone_hit.ogg'
 	sound_destroyed = 'sound/effects/stone_crumble.ogg'
 	plane = EFFECTS_PLANE
-	layer = BELOW_PROJECTILE_LAYER
 	light_color = "#FF0000"
 	var/stage = 1
 
@@ -797,7 +769,7 @@ var/list/cult_spires = list()
 		spawn(3)
 			update_stage()
 
-/obj/structure/cult/spire/proc/update_stage() //What the fuck is this
+/obj/structure/cult/spire/proc/update_stage()
 	animate(src, alpha = 128, color = list(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0), time = 10, loop = -1)
 	animate(alpha = 144, color = list(1.125,0.06,0,0,0,1.125,0.06,0,0.06,0,1.125,0,0,0,0,1,0,0,0,0), time = 2)
 	animate(alpha = 160, color = list(1.25,0.12,0,0,0,1.25,0.12,0,0.12,0,1.25,0,0,0,0,1,0,0,0,0), time = 2)
@@ -846,66 +818,66 @@ var/list/cult_spires = list()
 		update_stage()
 
 
-/obj/structure/cult/spire/cultist_act(var/mob/user,var/menu="default")
+/obj/structure/cult/spire/cultist_act(mob/user, menu = "default")
 	.=..()
-	if (!.)
+	if(!.)
 		return
 
-	if (!ishuman(user))
+	if(!ishuman(user))
 		to_chat(user,"<span class='warning'>Only humans can bear the arcane markings granted by this [name].</span>")
 		return
 
 	var/mob/living/carbon/human/H = user
-	var/datum/role/cultist/C = H.mind.GetRole(CULTIST)
+	var/datum/role/cultist/C = H.mind.has_antag_datum(VGCULTIST)
 
-	var/list/available_tattoos = list("tier1","tier2","tier3")
-	for (var/tattoo in C.tattoos)
+	var/list/available_tattoos = list("tier1", "tier2", "tier3")
+	for(var/tattoo in C.tattoos)
 		var/datum/cult_tattoo/CT = C.tattoos[tattoo]
 		available_tattoos -= "tier[CT.tier]"
 
 	var/tattoo_tier = 0
-	if (available_tattoos.len <= 0)
+	if(available_tattoos.len <= 0)
 		to_chat(user,"<span class='warning'>You cannot bear any additional mark.</span>")
 		return
-	if ("tier1" in available_tattoos)
+	if("tier1" in available_tattoos)
 		tattoo_tier = 1
-	else if ("tier2" in available_tattoos)
+	else if("tier2" in available_tattoos)
 		tattoo_tier = 2
-	else if ("tier3" in available_tattoos)
+	else if("tier3" in available_tattoos)
 		tattoo_tier = 3
 
-	if (!tattoo_tier)
+	if(!tattoo_tier)
 		return
 
 	var/list/choices = list()
-	if (stage >= tattoo_tier)
-		for (var/subtype in subtypesof(/datum/cult_tattoo))
+	if(stage >= tattoo_tier)
+		for(var/subtype in subtypesof(/datum/cult_tattoo))
 			var/datum/cult_tattoo/T = new subtype
-			if (T.tier == tattoo_tier)
+			if(T.tier == tattoo_tier)
 				choices += list(list(T.name, "radial_[T.icon_state]", T.desc)) //According to BYOND docs, when adding to a list, "If an argument is itself a list, each item in the list will be added." My solution to that, because I am a genius, is to add a list within a list.
 				to_chat(H, "<span class='danger'>[T.name]</span>: [T.desc]")
 	else
 		to_chat(user,"<span class='warning'>Come back to acquire another mark once your cult is a step closer to its goal.</span>")
 		return
 
-	var/tattoo = show_radial_menu(user,loc,choices,'icons/obj/cult_radial2.dmi',"radial-cult2")//spawning on loc so we aren't offset by pixel_x/pixel_y, or affected by animate()
+	var/tattoo = show_radial_menu(user, loc, choices,'icons/obj/cult_radial2.dmi', "radial-cult2")//spawning on loc so we aren't offset by pixel_x/pixel_y, or affected by animate()
 
-	for (var/tat in C.tattoos)
+	for(var/tat in C.tattoos)
 		var/datum/cult_tattoo/CT = C.tattoos[tat]
-		if (CT.tier == tattoo_tier)//the spire won't let cultists get multiple tattoos of the same tier.
+		if(CT.tier == tattoo_tier)//the spire won't let cultists get multiple tattoos of the same tier.
 			return
 
-	if (!Adjacent(user))//stay here you bloke!
+	if(!Adjacent(user))//stay here you bloke!
 		return
 
-	for (var/subtype in subtypesof(/datum/cult_tattoo))
+	for(var/subtype in subtypesof(/datum/cult_tattoo))
 		var/datum/cult_tattoo/T = new subtype
-		if (T.name == tattoo)
+		if(T.name == tattoo)
 			var/datum/cult_tattoo/new_tattoo = T
 			C.tattoos[new_tattoo.name] = new_tattoo
 
 			anim(target = loc, a_icon = 'icons/effects/32x96.dmi', flick_anim = "tattoo_send", lay = NARSIE_GLOW, plane = LIGHTING_PLANE)
-			spawn (3)
+			spawn(3)
 				C.update_cult_hud()
 				new_tattoo.getTattoo(H)
 				anim(target = H, a_icon = 'icons/effects/32x96.dmi', flick_anim = "tattoo_receive", lay = NARSIE_GLOW, plane = LIGHTING_PLANE)
@@ -915,7 +887,7 @@ var/list/cult_spires = list()
 				animate(tattoo_markings, alpha = 0, time = 30)
 
 			available_tattoos -= "tier[new_tattoo.tier]"
-			if (available_tattoos.len > 0)
+			if(available_tattoos.len > 0)
 				cultist_act(user)
 			break
 
@@ -955,7 +927,7 @@ var/list/cult_spires = list()
 	flick("forge-spawn",src)
 	spawn(10)
 		setup_overlays()
-
+/*
 	var/datum/holomap_marker/holomarker = new()
 	holomarker.id = HOLOMAP_MARKER_CULT_FORGE
 	holomarker.filter = HOLOMAP_FILTER_CULT
@@ -963,14 +935,14 @@ var/list/cult_spires = list()
 	holomarker.y = src.y
 	holomarker.z = src.z
 	holomap_markers[HOLOMAP_MARKER_CULT_FORGE+"_\ref[src]"] = holomarker
-
+*/
 /obj/structure/cult/forge/Destroy()
-	if (forging)
+	if(forging)
 		qdel(forging)
 	forging = null
 	forger = null
 	processing_objects.Remove(src)
-	holomap_markers -= HOLOMAP_MARKER_CULT_FORGE+"_\ref[src]"
+//	holomap_markers -= HOLOMAP_MARKER_CULT_FORGE+"_\ref[src]"
 	..()
 
 /obj/structure/cult/forge/proc/setup_overlays()
