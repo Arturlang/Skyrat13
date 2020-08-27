@@ -11,7 +11,7 @@
 		* use_available_blood
 			-> actually removes the blood from containers, displays flavor texts, and returns a /list with informations on the success/failure of the proc.
 		* spawn_bloodstones
-			-> called at the start of ACT III, or by set_veil_thickness. Triggers the rise of bloodstones accross the station Z level.
+			-> called at the start of ACT III, or by set_GLOB.veil_thickness. Triggers the rise of bloodstones accross the station Z level.
 		* prepare_cult_holomap
 			-> initialize the cult holomap displayed by Altars, and Bloodstones when it gets checked by a cultist
 		* cult_risk
@@ -23,7 +23,7 @@
 			* get_cult_power
 				-> returns the combined cult power of every item worn by that mob.
 		> /client procs:
-			* set_veil_thickness
+			* set_GLOB.veil_thickness
 				-> debug proc that lets you manipulate what powers are currently available to cult, disregarding the current completion of their objectives
 				-> WARNING: setting to "3" will trigger the rise of bloodstones.
 
@@ -39,7 +39,7 @@
 //CULT_MENDED		The cult failed (bloodstones all destroyed or rift closed). cult magic permanently disabled, living cultists progressively die by themselves.
 
 GLOBAL_VAR_INIT(anchor_bloodstone, 0) // Keeps track of what stone becomes the anchor stone
-GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
+GLOBAL_VAR_INIT(GLOB.veil_thickness, CULT_PROLOGUE)
 ///////////////////////////////GAMEMODE CODE - START/////////////////////////////////
 #define CULT_SCALING_COEFFICIENT 9.3 //Roughly one new cultist at roundstart per this many players
 
@@ -59,7 +59,6 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 		return FALSE
 
 	var/datum/antagonist/vgcultist/new_cultist = new()
-	new_cultist.give_equipment = equip
 
 	if(cult_mind.add_antag_datum(new_cultist))
 		if(stun)
@@ -77,7 +76,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 			cult_mind.current.Unconscious(100)
 		return TRUE
 
-/datum/game_mode/cult/proc/check_survive()
+/datum/game_mode/cult/vgcult/proc/check_survive()
 	var/acolytes_survived = 0
 	for(var/datum/mind/cult_mind in vgcultists)
 		if (cult_mind.current && cult_mind.current.stat != DEAD)
@@ -87,6 +86,11 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 		return FALSE
 	else
 		return TRUE
+
+/datum/game_mode/cult/vgcult/proc/fail()
+	if(GLOB.veil_thickness == CULT_MENDED || GLOB.veil_thickness == CULT_EPILOGUE)
+		return
+	stage(CULT_MENDED)
 
 /datum/game_mode/cult/vgcult/check_cult_victory()
 	return TRUE
@@ -110,6 +114,111 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 
 	round_credits += ..()
 	return round_credits
+
+/datum/faction/bloodcult/stage(new_act, A, forced = FALSE)
+	//This proc is called to update the faction's current objectives, and veil thickness
+	if(GLOB.veil_thickness == CULT_MENDED)
+		return//it's over, you lost
+
+	var/datum/runeset/rune_set = global_runesets["blood_cult"]
+
+	if(new_act == CULT_MENDED)
+		GLOB.veil_thickness = CULT_MENDED
+		..()
+		command_alert(/datum/command_alert/bloodstones_broken)
+		for(var/obj/structure/cult/bloodstone/B in bloodstone_list)
+			B.takeDamage(B.maxHealth + 1)
+		for(var/obj/effect/rune/R in rune_set.rune_list)
+			R.update_icon()
+		for(var/datum/role/cultist/C in members)
+			C.update_cult_hud()
+		return
+
+	if(new_act <= GLOB.veil_thickness)
+		return
+
+	var/datum/objective/new_obj = null
+
+	switch(new_act)
+		if(CULT_ACT_I)
+			var/datum/objective/bloodcult_reunion/O = locate() in objective_holder.objectives
+			if(O)
+				O.altar_built = TRUE
+				GLOB.veil_thickness = CULT_ACT_I
+				new_obj = new /datum/objective/bloodcult_followers
+		if(CULT_ACT_II)
+			var/datum/objective/bloodcult_followers/O = locate() in objective_holder.objectives
+			if(O)
+				O.conversions++
+				if(O.conversions >= O.convert_target || forced)
+					GLOB.veil_thickness = CULT_ACT_II
+					new_obj = new /datum/objective/bloodcult_sacrifice
+					for(var/datum/role/cultist/C in members)
+						var/mob/M = C.antag.current
+						for(var/obj/item/weapon/implant/loyalty/I in M)
+							I.forceMove(get_turf(M))
+							I.implanted = 0
+							M.visible_message("<span class='warning'>\The [I] pops out of \the [M]'s head.</span>")
+		if(CULT_ACT_III)
+			var/datum/objective/bloodcult_sacrifice/O = locate() in objective_holder.objectives
+			minor_victory = TRUE // At any rate, we achieve a minor win.
+			if(O)
+				O.target_sacrificed = TRUE
+				GLOB.veil_thickness = CULT_ACT_III
+				emergency_shuttle.force_shutdown()//No shuttle calls until the cult either wins or fails.
+				spawn_bloodstones(A)
+				..()
+				command_alert(/datum/command_alert/bloodstones_raised)
+				new_obj = new /datum/objective/bloodcult_bloodbath
+		if(CULT_ACT_IV)
+			var/datum/objective/bloodcult_bloodbath/O = locate() in objective_holder.objectives
+			if(O)
+				GLOB.veil_thickness = CULT_ACT_IV
+				new_obj = new /datum/objective/bloodcult_tearinreality
+				spawn(15 SECONDS) //A delay before the anchor stone is announced
+					if(global_anchor_bloodstone) //Check if it exploded in the mean time
+						command_alert(/datum/command_alert/bloodstones_anchor)
+		if(CULT_EPILOGUE)
+			var/datum/objective/bloodcult_tearinreality/O = locate() in objective_holder.objectives
+			if(O)
+				O.NARSIE_HAS_RISEN = TRUE
+				GLOB.veil_thickness = CULT_EPILOGUE
+				new_obj = new /datum/objective/bloodcult_feast
+
+	if(new_obj) //If not null, then we have likely advanced a stage
+		AppendObjective(new_obj)
+		for(var/datum/role/cultist/C in members)
+			var/mob/M = C.antag.current
+			if(M && iscultist(M))
+				to_chat(M,"<span class='danger'>[new_obj.name]</span><b>: [new_obj.explanation_text]</b>")
+				//ACT 1
+				if(istype(new_obj,/datum/objective/bloodcult_followers))
+					to_chat(M,"<b>As our ritual progresses through its Acts, the veil gets thinner, and dormant runes awaken. Summon a tome (<span class='danger'>See Blood Hell</span>) to see the available runes and learn their uses.</b>")
+				//ACT 2
+				if(istype(new_obj,/datum/objective/bloodcult_sacrifice))
+					var/datum/objective/bloodcult_sacrifice/O = new_obj
+					if(O.sacrifice_target)
+						if(M == O.sacrifice_target)
+							to_chat(M,"<b>There is no greater honor than purposefuly relinquishing your body for the coming of Nar-Sie.</b>")
+						to_chat(M,"<b>Should the target's body be annihilated, or should they flee the station, you may commune with Nar-Sie at an altar to have him designate a new target.</b>")
+					else
+						to_chat(M,"<b>There are no elligible targets aboard the station, how did you guys even manage that one?</b>")//if there's literally no humans aboard the station
+						to_chat(M,"<b>Commune with Nar-Sie at an altar to have him designate a new target.</b>")
+
+		for(var/datum/role/cultist/C in members)
+			C.update_cult_hud()
+
+		for(var/obj/structure/cult/spire/S in cult_spires)//spires update their appearance on Act 2 and 3, signaling new available tattoos.
+			S.upgrade()
+
+		for(var/obj/effect/rune/R in rune_set.rune_list)//runes now available will start pulsing
+			R.update_icon()
+
+		if(istype(new_obj,/datum/objective/bloodcult_bloodbath))
+			var/datum/objective/bloodcult_bloodbath/O = new_obj
+			O.max_bloodspill = max(O.max_bloodspill,bloody_floors.len)
+			if (O.IsFulfilled())
+				stage(CULT_ACT_IV)
 #undef CULT_SCALING_COEFFICIENT
 ///////////////////////////////FACTION CODE - START/////////////////////////////////
 /* We dont use factions for gamemode code.
@@ -139,7 +248,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 	return cult_win
 
 /datum/faction/vgcult/proc/fail()
-	if(veil_thickness == CULT_MENDED || veil_thickness == CULT_EPILOGUE)
+	if(GLOB.veil_thickness == CULT_MENDED || GLOB.veil_thickness == CULT_EPILOGUE)
 		return
 	stage(CULT_MENDED)
 
@@ -176,7 +285,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 		if(alert(usr, "Skip to the next Act?","Cult Progression Skip","Yes","No") == "No")
 			return
 
-		stage(veil_thickness + 1, forced = TRUE)
+		stage(GLOB.veil_thickness + 1, forced = TRUE)
 
 		message_admins("Admin [key_name_admin(usr)] has advanced the Blood Cult to the next Act.")
 		log_admin("Admin [key_name_admin(usr)] has advanced the Blood Cult to the next Act.")
@@ -220,13 +329,13 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 
 /datum/faction/vgcult/stage(var/new_act,var/A,var/forced=FALSE)
 	//This proc is called to update the faction's current objectives, and veil thickness
-	if(veil_thickness == CULT_MENDED)
+	if(GLOB.veil_thickness == CULT_MENDED)
 		return//it's over, you lost
 
 	var/datum/runeset/rune_set = global_runesets["blood_cult"]
 
 	if(new_act == CULT_MENDED)
-		veil_thickness = CULT_MENDED
+		GLOB.veil_thickness = CULT_MENDED
 		..()
 		command_alert(/datum/command_alert/bloodstones_broken)
 		for(var/obj/structure/table/cult/bloodstone/B in bloodstone_list)
@@ -237,7 +346,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 			C.update_cult_hud()
 		return
 
-	if(new_act <= veil_thickness)
+	if(new_act <= GLOB.veil_thickness)
 		return
 
 	var/datum/objective/new_obj = null
@@ -247,14 +356,14 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 			var/datum/objective/bloodcult_reunion/O = locate() in objective_holder.objectives
 			if(O)
 				O.altar_built = TRUE
-				veil_thickness = CULT_ACT_I
+				GLOB.veil_thickness = CULT_ACT_I
 				new_obj = new /datum/objective/bloodcult_followers
 		if(CULT_ACT_II)
 			var/datum/objective/bloodcult_followers/O = locate() in objective_holder.objectives
 			if(O)
 				O.conversions++
 				if(O.conversions >= O.convert_target || forced)
-					veil_thickness = CULT_ACT_II
+					GLOB.veil_thickness = CULT_ACT_II
 					new_obj = new /datum/objective/bloodcult_sacrifice
 					for(var/datum/role/cultist/C in members)
 						var/mob/M = C.antag.current
@@ -267,7 +376,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 			minor_victory = TRUE // At any rate, we achieve a minor win.
 			if(O)
 				O.target_sacrificed = TRUE
-				veil_thickness = CULT_ACT_III
+				GLOB.veil_thickness = CULT_ACT_III
 				emergency_shuttle.force_shutdown()//No shuttle calls until the cult either wins or fails.
 				spawn_bloodstones(A)
 				..()
@@ -276,7 +385,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 		if(CULT_ACT_IV)
 			var/datum/objective/bloodcult_bloodbath/O = locate() in objective_holder.objectives
 			if(O)
-				veil_thickness = CULT_ACT_IV
+				GLOB.veil_thickness = CULT_ACT_IV
 				new_obj = new /datum/objective/bloodcult_tearinreality
 				spawn(15 SECONDS) //A delay before the anchor stone is announced
 					if(global_anchor_bloodstone) //Check if it exploded in the mean time
@@ -285,7 +394,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 			var/datum/objective/bloodcult_tearinreality/O = locate() in objective_holder.objectives
 			if(O)
 				O.NARSIE_HAS_RISEN = TRUE
-				veil_thickness = CULT_EPILOGUE
+				GLOB.veil_thickness = CULT_EPILOGUE
 				new_obj = new /datum/objective/bloodcult_feast
 
 	if(new_obj) //If not null, then we have likely advanced a stage
@@ -357,7 +466,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 
 /datum/faction/vgcult/GetScoreboard()
 	.=..()
-	if(veil_thickness == CULT_EPILOGUE)
+	if(GLOB.veil_thickness == CULT_EPILOGUE)
 		var/obj/machinery/singularity/narsie/large/L = locate() in narsie_list //There should only be one
 		if(L.wounded)
 			. += "<BR><font color = 'green'><B>Though defeated, the crew managed to deal [L.wounded] damaging blows to \the [L].</B></font>"
@@ -923,7 +1032,7 @@ GLOBAL_VAR_INIT(veil_thickness, CULT_PROLOGUE)
 		return
 	if(cult.warning)
 		return
-	if(veil_thickness == CULT_MENDED || veil_thickness >= CULT_ACT_III)
+	if(GLOB.veil_thickness == CULT_MENDED || GLOB.veil_thickness >= CULT_ACT_III)
 		return
 
 	var/living_cultists = 0
@@ -979,7 +1088,7 @@ var/static/list/valid_cultpower_slots = list(
 	return power
 
 //WARNING: setting to "3" will trigger the rise of bloodstones.
-/client/proc/set_veil_thickness()
+/client/proc/set_GLOB.veil_thickness()
 	set category = "Special Verbs"
 	set name = "Set Veil Thickness"
 	set desc = "Debug verb for Cult 3.0 shenanigans"
@@ -987,9 +1096,9 @@ var/static/list/valid_cultpower_slots = list(
 	if(!check_rights(R_ADMIN))
 		return
 
-	veil_thickness = input(usr, "Enter a value (default = [CULT_PROLOGUE])", "Debug Veil Thickness", veil_thickness) as num
+	GLOB.veil_thickness = input(usr, "Enter a value (default = [CULT_PROLOGUE])", "Debug Veil Thickness", GLOB.veil_thickness) as num
 
-	if(veil_thickness == CULT_ACT_III)
+	if(GLOB.veil_thickness == CULT_ACT_III)
 		spawn_bloodstones()
 
 	var/datum/faction/vgcult/cult = find_active_faction_by_type(/datum/faction/vgcult)
@@ -1003,3 +1112,6 @@ var/static/list/valid_cultpower_slots = list(
 	var/datum/runeset/bloodcult_runeset = global_runesets["blood_cult"]
 	for(var/obj/effect/rune/R in bloodcult_runeset.rune_list)
 		R.update_icon()
+
+/datum/antagonist/vgcultist
+	var/second_chance

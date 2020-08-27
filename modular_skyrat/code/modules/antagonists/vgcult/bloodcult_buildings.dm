@@ -234,12 +234,12 @@
 			if(istype(blade) && !blade.shade)
 				var/icon/logo_icon = icon('icons/logos.dmi', "shade-blade")
 				for(var/mob/dead/observer/O in GLOB.dead_mob_list)
-					if(!O.client || jobban_isbanned(O, VGCULTIST) || O.client.is_afk())
+					if(!O.client || jobban_isbanned(O, ROLE_VGCULTIST) || O.client.is_afk())
 						continue
 					if(O?.mind && O.mind.has_antag_datum(/datum/antagonist/vgcultist))
-						var/datum/antagonist/vgcultist/cultist = O.mind.has_antag_datum(ROLE_VGCULTIST)
+						var/datum/antagonist/vgcultist/cultist = O.mind.has_antag_datum(ANTAG_DATUM_VGCULTIST)
 						if(cultist.second_chance)
-							to_chat(O, "[bicon(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, opening a small crack in the veil that allows you to become the blade's resident shade. (<a href='?src=\ref[src];signup=\ref[O]'>Possess now!</a>)</span>[bicon(logo_icon)]")
+							to_chat(O, "[icon2base64html(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, opening a small crack in the veil that allows you to become the blade's resident shade. (<a href='?src=\ref[src];signup=\ref[O]'>Possess now!</a>)</span>[icon2base64html(logo_icon)]")
 		return TRUE
 	if(user.pulling && ismob(user.pulling))
 		if(blade)
@@ -318,7 +318,7 @@
 			if(M.client)
 				spawn(5)//we give it time to fade out
 					M.client.images -= watcher_maps["\ref[M]"]
-				M.callOnFace -= "\ref[src]"
+				//M.callOnFace -= "\ref[src]"
 				animate(watcher_maps["\ref[M]"], alpha = 0, time = 5, easing = LINEAR_EASING)
 
 		watching_mobs = list()
@@ -328,7 +328,8 @@
 				if(!(user in watching_mobs))
 					user.client.images -= watcher_maps["\ref[user]"]
 					watcher_maps -= "\ref[user]"
-			user.callOnFace -= "\ref[src]"
+			//user.callOnFace -= "\ref[src]"
+
 			animate(watcher_maps["\ref[user]"], alpha = 0, time = 5, easing = LINEAR_EASING)
 
 			watching_mobs -= user
@@ -384,7 +385,7 @@
 					var/unbuckled = input(src, "Who do you wish to unbuckle?", "Unbuckle Who?") as null|mob in buckled_mobs
 					if(do_after(user, src, 20))
 						unbuckled.visible_message("<span class='notice'>\The [unbuckled] was freed from \the [src] by \the [user]!</span>", "You were freed from \the [src] by \the [user].")
-						C.user_unbuckle_mob(unbuckled, src)
+						user.unbuckle_mob(unbuckled, user)
 						if(blade)
 							blade.forceMove(loc)
 							blade.attack_hand(user)
@@ -508,7 +509,7 @@
 					user.client.images |= watcher_maps["\ref[user]"]
 					user.callOnFace["\ref[src]"] = "checkPosition"
 			if("Commune with Nar-Sie")
-				switch(veil_thickness)
+				switch(GLOB.veil_thickness)
 					if(CULT_MENDED)
 						to_chat(user, "...nothing but silence...")
 					if(CULT_PROLOGUE)
@@ -740,7 +741,7 @@ var/list/cult_spires = list()
 	..()
 	cult_spires.Add(src)
 	set_light(1)
-	stage = clamp(veil_thickness, 1, 3)
+	stage = clamp(GLOB.veil_thickness, 1, 3)
 	flick("spire[stage]-spawn",src)
 	spawn(10)
 		update_stage()
@@ -759,7 +760,7 @@ var/list/cult_spires = list()
 	..()
 
 /obj/structure/cult/spire/proc/upgrade()
-	var/new_stage = clamp(veil_thickness, 1, 3)
+	var/new_stage = clamp(GLOB.veil_thickness, 1, 3)
 	if (new_stage>stage)
 		stage = new_stage
 		alpha = 255
@@ -828,7 +829,7 @@ var/list/cult_spires = list()
 		return
 
 	var/mob/living/carbon/human/H = user
-	var/datum/role/cultist/C = H.mind.has_antag_datum(VGCULTIST)
+	var/datum/antagonist/vgcultist/C = H.mind.has_antag_datum(ANTAG_DATUM_VGCULTIST)
 
 	var/list/available_tattoos = list("tier1", "tier2", "tier3")
 	for(var/tattoo in C.tattoos)
@@ -1460,7 +1461,7 @@ var/list/bloodstone_list = list()
 	return
 
 /obj/structure/cult/bloodstone/takeDamage(var/damage)
-	if(veil_thickness == CULT_EPILOGUE)
+	if(GLOB.veil_thickness == CULT_EPILOGUE)
 		return
 	var/backup = (health > (2*maxHealth/3)) + (health > (maxHealth/3))
 	health -= damage

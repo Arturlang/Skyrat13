@@ -189,4 +189,3 @@
 
 #undef CULT_SCALING_COEFFICIENT
 
-/datum/antagonist/vgcultist

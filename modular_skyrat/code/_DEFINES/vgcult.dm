@@ -1,5 +1,5 @@
-#define VGCULT "VG-CULT"
-#define VGCULTIST "VGcultist"
+#define VGCULT "vgcult"
+#define ROLE_VGCULTIST "vgcultist"
 
 #define GREET_CONVERTED		"converted"
 #define GREET_PAMPHLET		"pamphlet"
@@ -83,4 +83,4 @@
 
 #define NARSIE_GLOW 6
 
-#define ROLE_VGCULTIST "vgcultist"
+#define ANTAG_DATUM_VGCULTIST /datum/antagonist/vgcultist

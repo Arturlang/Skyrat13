@@ -3436,6 +3436,7 @@
 #include "modular_skyrat\code\_HELPERS\istypes.dm"
 #include "modular_skyrat\code\_HELPERS\mobs.dm"
 #include "modular_skyrat\code\_HELPERS\names.dm"
+#include "modular_skyrat\code\_HELPERS\unsorted.dm"
 #include "modular_skyrat\code\_onlick\hud\hud.dm"
 #include "modular_skyrat\code\_HELPERS\reagents.dm"
 #include "modular_skyrat\code\_HELPERS\text.dm"

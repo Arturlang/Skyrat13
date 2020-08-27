@@ -1,1 +1,1 @@
-#define isanycultist(H) (H.mind && (H.mind.GetRole(VGCULTIST) || H.mind.GetRole(CULTIST)))
+#define isanycultist(H) (H.mind && (H.mind.GetRole(ROLE_VGCULTIST) || H.mind.GetRole(CULTIST)))

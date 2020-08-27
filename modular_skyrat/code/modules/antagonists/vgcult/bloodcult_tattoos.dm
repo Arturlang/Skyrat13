@@ -7,18 +7,18 @@
 	var/mob/bearer = null
 	var/blood_cost = 0
 
-/datum/cult_tattoo/proc/getTattoo(var/mob/M)
+/datum/cult_tattoo/proc/getTattoo(mob/M)
 	bearer = M
 
-/mob/proc/checkTattoo(var/tattoo_name)
+/mob/proc/checkTattoo(tattoo_name)
 	if(!tattoo_name)
 		return
 	if(!isvgcultist(src))
 		return
-	var/datum/antagonist/vgcultist/D = M.mind.has_antag_datum(/datum/antagonist/vgcultist)
-	for(var/tattoo in C.tattoos)
-		var/datum/cult_tattoo/CT = C.tattoos[tattoo]
-		if (CT.name == tattoo_name)
+	var/datum/antagonist/vgcultist/D = src.mind.has_antag_datum(/datum/antagonist/vgcultist)
+	for(var/tattoo in src.tattoos)
+		var/datum/cult_tattoo/CT = src.tattoos[tattoo]
+		if(CT.name == tattoo_name)
 			return CT
 	return null
 
@@ -38,7 +38,7 @@ var/list/blood_communion = list()
 /datum/cult_tattoo/bloodpool/getTattoo(var/mob/M)
 	..()
 	if(isvgcultist(M))
-		blood_communion.Add(M.mind.has_antag_datum(ROLE_VGCULTIST))
+		blood_communion.Add(M.mind.has_antag_datum(ANTAG_DATUM_VGCULTIST))
 
 /datum/cult_tattoo/silent
 	name = TATTOO_SILENT
@@ -54,7 +54,7 @@ var/list/blood_communion = list()
 
 /datum/cult_tattoo/dagger/getTattoo(mob/M)
 	..()
-	if (M.mind &&M.mind.has_antag_datum(ROLE_VGCULTIST))
+	if (M.mind && M.mind.has_antag_datum(ANTAG_DATUM_VGCULTIST))
 		M.add_spell(new /spell/cult/blood_dagger, "cult_spell_ready", /obj/abstract/screen/movable/spell_master/bloodcult)
 
 
@@ -78,7 +78,7 @@ var/list/blood_communion = list()
 
 /datum/cult_tattoo/memorize/getTattoo(var/mob/M)
 	..()
-	if(M.mind && M.mind.has_antag_datum(ROLE_VGCULTIST))
+	if(M.mind && M.mind.has_antag_datum(ANTAG_DATUM_VGCULTIST))
 		M.add_spell(new /spell/cult/arcane_dimension, "cult_spell_ready", /obj/abstract/screen/movable/spell_master/bloodcult)
 
 /datum/cult_tattoo/chat
