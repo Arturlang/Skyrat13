@@ -8,21 +8,21 @@
 	construction_time = 500
 	category = list("Cyborg")
 
-/datum/design/borg_chest
-	name = "Cyborg Torso"
-	id = "borg_chest"
-	build_type = MECHFAB
-	build_path = /obj/item/bodypart/chest/robot
-	materials = list(/datum/material/iron=40000)
-	construction_time = 350
-	category = list("Cyborg")
-
 /datum/design/borg_head
 	name = "Cyborg Head"
 	id = "borg_head"
 	build_type = MECHFAB
 	build_path = /obj/item/bodypart/head/robot
 	materials = list(/datum/material/iron=5000)
+	construction_time = 350
+	category = list("Cyborg")
+
+/datum/design/borg_chest
+	name = "Cyborg Chest"
+	id = "borg_chest"
+	build_type = MECHFAB
+	build_path = /obj/item/bodypart/chest/robot
+	materials = list(/datum/material/iron=40000)
 	construction_time = 350
 	category = list("Cyborg")
 
@@ -35,12 +35,30 @@
 	construction_time = 200
 	category = list("Cyborg")
 
+/datum/design/borg_l_hand
+	name = "Cyborg Left Hand"
+	id = "borg_l_hand"
+	build_type = MECHFAB
+	build_path = /obj/item/bodypart/l_hand/robot
+	materials = list(/datum/material/iron=3000)
+	construction_time = 200
+	category = list("Cyborg")
+
 /datum/design/borg_r_arm
 	name = "Cyborg Right Arm"
 	id = "borg_r_arm"
 	build_type = MECHFAB
 	build_path = /obj/item/bodypart/r_arm/robot
 	materials = list(/datum/material/iron=10000)
+	construction_time = 200
+	category = list("Cyborg")
+
+/datum/design/borg_r_hand
+	name = "Cyborg Right Hand"
+	id = "borg_r_hand"
+	build_type = MECHFAB
+	build_path = /obj/item/bodypart/r_hand/robot
+	materials = list(/datum/material/iron=3000)
 	construction_time = 200
 	category = list("Cyborg")
 
@@ -53,12 +71,30 @@
 	construction_time = 200
 	category = list("Cyborg")
 
+/datum/design/borg_l_foot
+	name = "Cyborg Left Foot"
+	id = "borg_l_foot"
+	build_type = MECHFAB
+	build_path = /obj/item/bodypart/l_foot/robot
+	materials = list(/datum/material/iron=3000)
+	construction_time = 200
+	category = list("Cyborg")
+
 /datum/design/borg_r_leg
 	name = "Cyborg Right Leg"
 	id = "borg_r_leg"
 	build_type = MECHFAB
 	build_path = /obj/item/bodypart/r_leg/robot
 	materials = list(/datum/material/iron=10000)
+	construction_time = 200
+	category = list("Cyborg")
+
+/datum/design/borg_r_foot
+	name = "Cyborg Right Foot"
+	id = "borg_r_foot"
+	build_type = MECHFAB
+	build_path = /obj/item/bodypart/r_foot/robot
+	materials = list(/datum/material/iron=3000)
 	construction_time = 200
 	category = list("Cyborg")
 
@@ -263,6 +299,79 @@
 	materials = list(/datum/material/iron=15000,/datum/material/diamond=10000,/datum/material/titanium=10000)
 	construction_time = 600
 	category = list("Gygax")
+
+//Medical Gygax
+/datum/design/medigax_chassis
+	name = "Exosuit Chassis (\"Medical Gygax\")"
+	id = "medigax_chassis"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/chassis/medigax
+	materials = list(/datum/material/iron=20000)
+	construction_time = 100
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_torso
+	name = "Exosuit Torso (\"Medical Gygax\")"
+	id = "medigax_torso"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_torso
+	materials = list(/datum/material/iron=20000,/datum/material/glass=10000,/datum/material/diamond=2000)
+	construction_time = 300
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_head
+	name = "Exosuit Head (\"Medical Gygax\")"
+	id = "medigax_head"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_head
+	materials = list(/datum/material/iron=10000,/datum/material/glass=5000, /datum/material/diamond=2000)
+	construction_time = 200
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_left_arm
+	name = "Exosuit Left Arm (\"Medical Gygax\")"
+	id = "medigax_left_arm"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_left_arm
+	materials = list(/datum/material/iron=15000, /datum/material/diamond=1000)
+	construction_time = 200
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_right_arm
+	name = "Exosuit Right Arm (\"Medical Gygax\")"
+	id = "medigax_right_arm"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_right_arm
+	materials = list(/datum/material/iron=15000, /datum/material/diamond=1000)
+	construction_time = 200
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_left_leg
+	name = "Exosuit Left Leg (\"Medical Gygax\")"
+	id = "medigax_left_leg"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_left_leg
+	materials = list(/datum/material/iron=15000, /datum/material/diamond=2000)
+	construction_time = 200
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_right_leg
+	name = "Exosuit Right Leg (\"Medical Gygax\")"
+	id = "medigax_right_leg"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_right_leg
+	materials = list(/datum/material/iron=15000, /datum/material/diamond=2000)
+	construction_time = 200
+	category = list("Medical-Spec Gygax")
+
+/datum/design/medigax_armor
+	name = "Exosuit Armor (\"Medical Gygax\")"
+	id = "medigax_armor"
+	build_type = MECHFAB
+	build_path = /obj/item/mecha_parts/part/medigax_armor
+	materials = list(/datum/material/iron=15000,/datum/material/diamond=10000,/datum/material/titanium=10000)
+	construction_time = 600
+	category = list("Medical-Spec Gygax")
 
 //Durand
 /datum/design/durand_chassis
@@ -732,6 +841,7 @@
 	construction_time = 120
 	category = list("Cyborg Upgrade Modules")
 */
+
 /datum/design/boris_ai_controller
 	name = "B.O.R.I.S. AI-Cyborg Remote Control Module"
 	id = "borg_ai_control"

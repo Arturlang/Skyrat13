@@ -8,6 +8,7 @@
 /mob/living/carbon/human/Initialize()
 	verbs += /mob/living/proc/mob_sleep
 	verbs += /mob/living/proc/lay_down
+	verbs += /mob/living/proc/surrender //Skyrat change
 	verbs += /mob/living/carbon/human/proc/underwear_toggle //fwee
 
 	//initialize limbs first
@@ -26,6 +27,7 @@
 	physiology = new()
 
 	AddComponent(/datum/component/personal_crafting)
+	AddComponent(/datum/component/footstep, FOOTSTEP_MOB_HUMAN, 1, 2)
 	. = ..()
 
 	if(CONFIG_GET(flag/disable_stambuffer))
@@ -38,8 +40,10 @@
 	. = ..()
 	if(!CONFIG_GET(flag/disable_human_mood))
 		AddComponent(/datum/component/mood)
-	AddElement(/datum/element/flavor_text/carbon)
+	AddComponent(/datum/component/combat_mode)
+	AddElement(/datum/element/flavor_text/carbon, _name = "Flavor Text", _save_key = "flavor_text")
 	AddElement(/datum/element/flavor_text, "", "Temporary Flavor Text", "This should be used only for things pertaining to the current round!")
+	//AddElement(/datum/element/flavor_text, _name = "OOC Notes", _addendum = "Put information on ERP/vore/lewd-related preferences here. THIS SHOULD NOT CONTAIN REGULAR FLAVORTEXT!!", _always_show = TRUE, _save_key = "ooc_notes", _examine_no_preview = TRUE) //Skyrat change - we have our own OOC notes
 
 /mob/living/carbon/human/Destroy()
 	QDEL_NULL(physiology)
@@ -149,8 +153,12 @@
 
 	dat += "<tr><td>&nbsp;</td></tr>"
 
-	dat += "<tr><td><B>Exosuit:</B></td><td><A href='?src=[REF(src)];item=[SLOT_WEAR_SUIT]'>[(wear_suit && !(wear_suit.item_flags & ABSTRACT)) ? wear_suit : "<font color=grey>Empty</font>"]</A></td></tr>"
+	dat += "<tr><td><B>Exosuit:</B></td><td><A href='?src=[REF(src)];item=[SLOT_WEAR_SUIT]'>[(wear_suit && !(wear_suit.item_flags & ABSTRACT)) ? wear_suit : "<font color=grey>Empty</font>"]</A>"
 	if(wear_suit)
+		if(istype(wear_suit, /obj/item/clothing/suit/space/hardsuit))
+			var/hardsuit_head = head && istype(head, /obj/item/clothing/head/helmet/space/hardsuit)
+			dat += "&nbsp;<A href='?src=[REF(src)];toggle_helmet=[SLOT_WEAR_SUIT]'>[hardsuit_head ? "Retract Helmet" : "Extend Helmet"]</A>"
+		dat += "</td></tr>"
 		dat += "<tr><td>&nbsp;&#8627;<B>Suit Storage:</B></td><td><A href='?src=[REF(src)];item=[SLOT_S_STORE]'>[(s_store && !(s_store.item_flags & ABSTRACT)) ? s_store : "<font color=grey>Empty</font>"]</A>"
 		if(has_breathable_mask && istype(s_store, /obj/item/tank))
 			dat += "&nbsp;<A href='?src=[REF(src)];internal=[SLOT_S_STORE]'>[internal ? "Disable Internals" : "Set Internals"]</A>"
@@ -217,30 +225,30 @@
 			var/obj/item/I = locate(href_list["embedded_object"]) in L.embedded_objects
 			if(!I || I.loc != src) //no item, no limb, or item is not in limb or in the person anymore
 				return
-			var/time_taken = I.embedding.embedded_unsafe_removal_time/I.w_class //Citadel Change from * to /
-			usr.visible_message("<span class='warning'>[usr] attempts to remove [I] from [usr.p_their()] [L.name].</span>","<span class='notice'>You attempt to remove [I] from your [L.name]... (It will take [DisplayTimeText(time_taken)].)</span>")
-			if(do_after(usr, time_taken, needhand = 1, target = src))
-				remove_embedded_unsafe(L, I, usr)
-				/* CITADEL EDIT: remove_embedded_unsafe replaces this code
-				if(!I || !L || I.loc != src || !(I in L.embedded_objects))
-					return
-				L.embedded_objects -= I
-				L.receive_damage(I.embedding.embedded_unsafe_removal_pain_multiplier*I.w_class)//It hurts to rip it out, get surgery you dingus.
-				I.forceMove(get_turf(src))
-				usr.put_in_hands(I)
-				usr.emote("scream")
-				usr.visible_message("[usr] successfully rips [I] out of [usr.p_their()] [L.name]!","<span class='notice'>You successfully remove [I] from your [L.name].</span>")
-				if(!has_embedded_objects())
-					clear_alert("embeddedobject")
-					SEND_SIGNAL(usr, COMSIG_CLEAR_MOOD_EVENT, "embedded") */
+			SEND_SIGNAL(src, COMSIG_CARBON_EMBED_RIP, I, L)
 			return
-
+		if(href_list["toggle_helmet"])
+			if(!istype(head, /obj/item/clothing/head/helmet/space/hardsuit))
+				return
+			var/obj/item/clothing/head/helmet/space/hardsuit/hardsuit_head = head
+			visible_message("<span class='danger'>[usr] tries to [hardsuit_head ? "retract" : "extend"] [src]'s helmet.</span>", \
+								"<span class='userdanger'>[usr] tries to [hardsuit_head ? "retract" : "extend"] [src]'s helmet.</span>", \
+								target = usr, target_message = "<span class='danger'>You try to [hardsuit_head ? "retract" : "extend"] [src]'s helmet.</span>")
+			if(!do_mob(usr, src, hardsuit_head ? head.strip_delay : POCKET_STRIP_DELAY))
+				return
+			if(!istype(wear_suit, /obj/item/clothing/suit/space/hardsuit) || (hardsuit_head ? (!head || head != hardsuit_head) : head))
+				return
+			var/obj/item/clothing/suit/space/hardsuit/hardsuit = wear_suit //This should be an hardsuit given all our checks
+			if(hardsuit.ToggleHelmet(FALSE))
+				visible_message("<span class='danger'>[usr] [hardsuit_head ? "retract" : "extend"] [src]'s helmet</span>", \
+										"<span class='userdanger'>[usr] [hardsuit_head ? "retract" : "extend"] [src]'s helmet</span>", \
+										target = usr, target_message = "<span class='danger'>You [hardsuit_head ? "retract" : "extend"] [src]'s helmet.</span>")
+			return
 		if(href_list["item"])
 			var/slot = text2num(href_list["item"])
 			if(slot in check_obscured_slots())
 				to_chat(usr, "<span class='warning'>You can't reach that! Something is covering it.</span>")
 				return
-
 		if(href_list["pockets"])
 			var/strip_mod = 1
 			var/strip_silence = FALSE
@@ -777,35 +785,40 @@
 						hud_used.healths.icon_state = "health7"
 					if(SCREWYHUD_HEALTHY)
 						hud_used.healths.icon_state = "health0"
+			if(HAS_TRAIT(src, TRAIT_SCREWY_CHECKSELF))
+				hud_used.healths.icon_state = "health0"
 		if(hud_used.healthdoll)
 			hud_used.healthdoll.cut_overlays()
 			if(stat != DEAD)
 				hud_used.healthdoll.icon_state = "healthdoll_OVERLAY"
-				for(var/X in bodyparts)
-					var/obj/item/bodypart/BP = X
-					var/damage = BP.burn_dam + BP.brute_dam
-					var/comparison = (BP.max_damage/5)
-					var/icon_num = 0
-					if(damage)
-						icon_num = 1
-					if(damage > (comparison))
-						icon_num = 2
-					if(damage > (comparison*2))
-						icon_num = 3
-					if(damage > (comparison*3))
-						icon_num = 4
-					if(damage > (comparison*4))
-						icon_num = 5
-					if(hal_screwyhud == SCREWYHUD_HEALTHY)
-						icon_num = 0
-					if(icon_num)
-						hud_used.healthdoll.add_overlay(mutable_appearance('icons/mob/screen_gen.dmi', "[BP.body_zone][icon_num]"))
-				for(var/t in get_missing_limbs()) //Missing limbs
-					hud_used.healthdoll.add_overlay(mutable_appearance('icons/mob/screen_gen.dmi', "[t]6"))
-				for(var/t in get_disabled_limbs()) //Disabled limbs
-					hud_used.healthdoll.add_overlay(mutable_appearance('icons/mob/screen_gen.dmi', "[t]7"))
+				if(!HAS_TRAIT(src, TRAIT_SCREWY_CHECKSELF))
+					for(var/X in bodyparts)
+						var/obj/item/bodypart/BP = X
+						var/damage = BP.burn_dam + BP.brute_dam
+						var/comparison = (BP.max_damage/5)
+						var/icon_num = 0
+						if(damage)
+							icon_num = 1
+						if(damage > (comparison))
+							icon_num = 2
+						if(damage > (comparison*2))
+							icon_num = 3
+						if(damage > (comparison*3))
+							icon_num = 4
+						if(damage > (comparison*4))
+							icon_num = 5
+						if(hal_screwyhud == SCREWYHUD_HEALTHY)
+							icon_num = 0
+						if(icon_num)
+			//skyrat edit - modular health doll
+							hud_used.healthdoll.add_overlay(mutable_appearance('modular_skyrat/icons/mob/screen_gen.dmi', "[BP.body_zone][icon_num]"))
+					for(var/t in get_missing_limbs()) //Missing limbs
+						hud_used.healthdoll.add_overlay(mutable_appearance('modular_skyrat/icons/mob/screen_gen.dmi', "[t]6"))
+					for(var/t in get_disabled_limbs()) //Disabled limbs
+						hud_used.healthdoll.add_overlay(mutable_appearance('modular_skyrat/icons/mob/screen_gen.dmi', "[t]7"))
 			else
 				hud_used.healthdoll.icon_state = "healthdoll_DEAD"
+			//
 
 		hud_used.staminas?.update_icon_state()
 		hud_used.staminabuffer?.update_icon_state()
@@ -994,7 +1007,7 @@
 				if(target.incapacitated(FALSE, TRUE) || incapacitated(FALSE, TRUE))
 					target.visible_message("<span class='warning'>[target] can't hang onto [src]!</span>")
 					return
-				buckle_mob(target, TRUE, TRUE, FALSE, 0, 2, FALSE)
+				buckle_mob(target, TRUE, TRUE, FALSE, 1, 2, FALSE)
 		else
 			visible_message("<span class='warning'>[target] fails to climb onto [src]!</span>")
 	else
@@ -1049,15 +1062,19 @@
 /mob/living/carbon/human/updatehealth()
 	. = ..()
 
-	if(HAS_TRAIT(src, TRAIT_IGNORESLOWDOWN))
+	if(HAS_TRAIT(src, TRAIT_IGNORESLOWDOWN))	//if we want to ignore slowdown from damage and equipment
 		remove_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown)
 		remove_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown_flying)
 		return
 	var/stambufferinfluence = (bufferedstam*(100/stambuffer))*0.2 //CIT CHANGE - makes stamina buffer influence movedelay
-	var/health_deficiency = ((100 + stambufferinfluence) - health + (getStaminaLoss()*0.75))//CIT CHANGE - reduces the impact of staminaloss and makes stamina buffer influence it
-	if(health_deficiency >= 40)
-		add_or_update_variable_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown, TRUE, (health_deficiency-39) / 75)
-		add_or_update_variable_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown_flying, TRUE, (health_deficiency-39) / 25)
+	if(!HAS_TRAIT(src, TRAIT_IGNOREDAMAGESLOWDOWN))	//if we want to ignore slowdown from damage, but not from equipment
+		var/health_deficiency = ((maxHealth + stambufferinfluence) - health + (getStaminaLoss()*0.75))//CIT CHANGE - reduces the impact of staminaloss and makes stamina buffer influence it
+		if(health_deficiency >= 40)
+			add_or_update_variable_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown, TRUE, (health_deficiency-39) / 75)
+			add_or_update_variable_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown_flying, TRUE, (health_deficiency-39) / 25)
+		else
+			remove_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown)
+			remove_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown_flying)
 	else
 		remove_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown)
 		remove_movespeed_modifier(/datum/movespeed_modifier/damage_slowdown_flying)
@@ -1232,8 +1249,17 @@
 /mob/living/carbon/human/species/zombie/krokodil_addict
 	race = /datum/species/krokodil_addict
 
+/mob/living/carbon/human/species/anthro
+	race = /datum/species/anthro
+
 /mob/living/carbon/human/species/mammal
-	race = /datum/species/mammal
+	race = /datum/species/anthro/mammal
+
+/mob/living/carbon/human/species/avian
+	race = /datum/species/anthro/avian
+
+/mob/living/carbon/human/species/aquatic
+	race = /datum/species/anthro/aquatic
 
 /mob/living/carbon/human/species/insect
 	race = /datum/species/insect
@@ -1246,3 +1272,24 @@
 
 /mob/living/carbon/human/species/roundstartslime
 	race = /datum/species/jelly/roundstartslime
+
+//skyrat edit
+/mob/living/carbon/human/is_bleeding()
+	if(NOBLOOD in dna.species.species_traits)
+		return FALSE
+	return ..()
+
+/mob/living/carbon/human/has_gauze()
+	if(NOBLOOD in dna.species.species_traits)
+		return FALSE
+	return ..()
+
+/mob/living/carbon/human/get_total_bleed_rate()
+	if(NOBLOOD in dna.species.species_traits)
+		return FALSE
+	return ..()
+
+/mob/living/carbon/human/get_biological_state()
+	if(!length(dna?.species?.species_traits))
+		return BIO_INORGANIC
+	return dna.species.get_biological_state()

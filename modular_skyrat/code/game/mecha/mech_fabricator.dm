@@ -3,11 +3,15 @@
 	var/datum/component/remote_materials/rmat
 	part_sets = list(
 						"Cyborg",
+						"IPC",
 						"Ripley",
 						"Firefighter",
 						"Killdozer",
+						"Clarke",
+						"Buzz",
 						"Odysseus",
 						"Gygax",
+						"Medical-Spec Gygax",
 						"Durand",
 						"H.O.N.K",
 						"Phazon",
@@ -104,7 +108,6 @@
 
 	var/location = get_step(src,(dir))
 	var/obj/item/I = new D.build_path(location)
-	I.material_flags |= MATERIAL_NO_EFFECTS
 	I.set_custom_materials(res_coef)
 	say("\The [I] is complete.")
 	being_built = null

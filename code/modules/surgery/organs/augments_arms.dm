@@ -1,7 +1,9 @@
+/* moved to modular_skyrat
 /obj/item/organ/cyberimp/arm
 	name = "arm-mounted implant"
 	desc = "You shouldn't see this! Adminhelp and report this as an issue on github!"
 	zone = BODY_ZONE_R_ARM
+	organ_flags = ORGAN_SYNTHETIC
 	icon_state = "implant-toolkit"
 	w_class = WEIGHT_CLASS_NORMAL
 	actions_types = list(/datum/action/item_action/organ_action/toggle)
@@ -287,3 +289,4 @@
 	var/obj/item/assembly/flash/armimplant/F = new(src)
 	items_list += F
 	F.I = src
+*/

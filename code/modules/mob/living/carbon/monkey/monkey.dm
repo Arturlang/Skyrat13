@@ -13,8 +13,7 @@
 	gib_type = /obj/effect/decal/cleanable/blood/gibs
 	unique_name = TRUE
 	//blocks_emissive = EMISSIVE_BLOCK_UNIQUE // Skyrat edit -- 512 compatibility
-	bodyparts = list(/obj/item/bodypart/chest/monkey, /obj/item/bodypart/head/monkey, /obj/item/bodypart/l_arm/monkey,
-					 /obj/item/bodypart/r_arm/monkey, /obj/item/bodypart/r_leg/monkey, /obj/item/bodypart/l_leg/monkey)
+	bodyparts = MONKEY_BODYPARTS_PATH
 	hud_type = /datum/hud/monkey
 
 /mob/living/carbon/monkey/Initialize(mapload, cubespawned=FALSE, mob/spawner)
@@ -41,10 +40,12 @@
 
 	create_dna(src)
 	dna.initialize_dna(random_blood_type())
+	dna.monkey_aspect = TRUE
 
 /mob/living/carbon/monkey/ComponentInitialize()
 	. = ..()
 	AddElement(/datum/element/mob_holder, worn_state = "monkey", inv_slots = ITEM_SLOT_HEAD)
+	AddComponent(/datum/component/footstep, FOOTSTEP_MOB_BAREFOOT, 1, 2)
 
 
 /mob/living/carbon/monkey/Destroy()
@@ -74,9 +75,10 @@
 /mob/living/carbon/monkey/updatehealth()
 	. = ..()
 	var/slow = 0
-	var/health_deficiency = (100 - health)
-	if(health_deficiency >= 45)
-		slow += (health_deficiency / 25)
+	if(!HAS_TRAIT(src, TRAIT_IGNOREDAMAGESLOWDOWN))
+		var/health_deficiency = (maxHealth - health)
+		if(health_deficiency >= 45)
+			slow += (health_deficiency / 25)
 	add_or_update_variable_movespeed_modifier(/datum/movespeed_modifier/monkey_health_speedmod, TRUE, slow)
 
 /mob/living/carbon/monkey/adjust_bodytemperature(amount)
@@ -171,3 +173,27 @@
 		var/obj/item/clothing/head/helmet/justice/escape/helmet = new(src)
 		equip_to_slot_or_del(helmet,SLOT_HEAD)
 		helmet.attack_self(src) // todo encapsulate toggle
+
+/mob/living/carbon/monkey/coder
+	name = "coder monkey"
+	aggressive = TRUE
+	verb_say = "criticizes"
+
+/mob/living/carbon/monkey/coder/Initialize() //Skyrats edit, donor hair removed.
+	. = ..()
+	var/list/possible_hats = list(
+		/obj/item/clothing/head/cone = 2,
+		/obj/item/clothing/head/crown = 1,
+		/obj/item/clothing/head/fedora = 2,
+		//obj/item/clothing/head/foilhat = 1, SKYRAT EDIT: This shit creates errors
+		/obj/item/clothing/head/hardhat/cakehat = 1,
+		/obj/item/clothing/head/helmet/justice = 2,
+		/obj/item/clothing/head/papersack = 2,
+		/obj/item/clothing/head/sombrero/shamebrero = 1
+	)
+	var/obj/item/clothing/head/H = pickweight(possible_hats)
+	H = new H(src)
+	equip_to_slot_or_del(H,SLOT_HEAD)
+
+/mob/living/carbon/monkey/get_biological_state()
+	. = BIO_FULL

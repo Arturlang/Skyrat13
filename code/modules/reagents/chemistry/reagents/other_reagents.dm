@@ -41,12 +41,19 @@
 	if(iscarbon(L))
 		var/mob/living/carbon/C = L
 		var/blood_id = C.get_blood_id()
-		if((HAS_TRAIT(C, TRAIT_NOMARROW) || blood_id == /datum/reagent/blood || blood_id == /datum/reagent/blood/jellyblood) && (method == INJECT || (method == INGEST && C.dna && C.dna.species && (DRINKSBLOOD in C.dna.species.species_traits))))
+		if((HAS_TRAIT(C, TRAIT_NOMARROW) || blood_id == /datum/reagent/blood || blood_id == /datum/reagent/blood/jellyblood) && (method == INJECT || (method == INGEST && C.dna && C.dna.species && (DRINKSBLOOD in C.dna.species.species_traits))) && !AmBloodsucker(C))
 			C.blood_volume = min(C.blood_volume + round(reac_volume, 0.1), BLOOD_VOLUME_MAXIMUM * C.blood_ratio)
 			// we don't care about bloodtype here, we're just refilling the mob
+			
+			//skyrat edit - we try to revive the carbon mob if it happens to be a synthetic
+			if(length(C.dna?.species?.species_traits) && (ROBOTIC_LIMBS in C.dna.species.species_traits) && length(C.bodyparts))
+				var/obj/item/bodypart/affecting = C.bodyparts[1]
+				if(istype(affecting))
+					affecting.heal_damage(0, 0, 0, TRUE, FALSE, FALSE)
+			//skyrat edit end
 
 	if(reac_volume >= 10 && istype(L) && method != INJECT)
-		L.add_blood_DNA(list(data["blood_DNA"] = data["blood_type"]))
+		L.add_blood_DNA(list("color" = data["bloodcolor"] || BLOOD_COLOR_HUMAN, data["blood_DNA"] = data["blood_type"]))
 
 /datum/reagent/blood/on_mob_life(mob/living/carbon/C)	//Because lethals are preferred over stamina. damnifino.
 	var/blood_id = C.get_blood_id()
@@ -70,6 +77,7 @@
 		B = new(T)
 	if(data["blood_DNA"])
 		B.blood_DNA[data["blood_DNA"]] = data["blood_type"]
+		B.blood_DNA["color"] = data["color"]
 	if(B.reagents)
 		B.reagents.add_reagent(type, reac_volume)
 	B.update_icon()
@@ -77,7 +85,7 @@
 /datum/reagent/blood/on_new(list/data)
 	if(istype(data))
 		SetViruses(src, data)
-		color = bloodtype_to_color(data["blood_type"])
+		color = data["bloodcolor"]
 		if(data["blood_type"] == "SY")
 			name = "Synthetic Blood"
 			taste_description = "oil"
@@ -143,6 +151,7 @@
 	taste_description = "oil"
 	color = BLOOD_COLOR_SYNTHETIC // rgb: 11, 7, 48
 	value = REAGENT_VALUE_NONE
+	process_flags = REAGENT_ORGANIC | REAGENT_SYNTHETIC
 
 /datum/reagent/blood/jellyblood
 	data = list("donor"=null,"viruses"=null,"blood_DNA"=null, "bloodcolor" = BLOOD_COLOR_SLIME, "blood_type"="GEL","resistances"=null,"trace_chem"=null,"mind"=null,"ckey"=null,"gender"=null,"real_name"=null,"cloneable"=null,"factions"=null)
@@ -240,6 +249,15 @@
 	glass_desc = "The father of all refreshments."
 	shot_glass_icon_state = "shotglassclear"
 
+/datum/reagent/water/on_mob_life(mob/living/carbon/M)
+	. = ..()
+	if(M.blood_volume)
+		M.blood_volume += 0.1 // water is good for you!
+	if(ishuman(M))
+		var/mob/living/carbon/human/H = M
+		if(isslimeperson(H))
+			M.blood_volume += 0.5 // water is REALLY good for you!
+
 /*
  *	Water reaction to turf
  */
@@ -315,6 +333,8 @@
 
 /datum/reagent/water/holywater/on_mob_metabolize(mob/living/L)
 	. = ..()
+	if(L.blood_volume)
+		L.blood_volume += 0.1 // water is good for you!
 	ADD_TRAIT(L, TRAIT_HOLY, type)
 
 	if(is_servant_of_ratvar(L))
@@ -692,11 +712,11 @@
 	mutationtext = "<span class='danger'>The pain subsides. You feel... artificial.</span>"
 
 //Citadel Races
-/datum/reagent/mutationtoxin/mammal
-	name = "Mammal Mutation Toxin"
+/datum/reagent/mutationtoxin/anthro //skyrat edit
+	name = "Anthro Mutation Toxin" //skyrat edit
 	description = "A glowing toxin."
 	color = "#5EFF3B" //RGB: 94, 255, 59
-	race = /datum/species/mammal
+	race = /datum/species/anthro //skyrat edit
 	mutationtext = "<span class='danger'>The pain subsides. You feel... fluffier.</span>"
 
 /datum/reagent/mutationtoxin/insect
@@ -1045,6 +1065,14 @@
 			// +20% success propability on each step, useful while operating in less-than-perfect conditions
 	..()
 
+/datum/reagent/space_cleaner/sterilizine/reaction_obj(obj/O, reac_volume)
+	if(istype(O, /obj/item/stack/medical/gauze))
+		var/obj/item/stack/medical/gauze/G = O
+		reac_volume = min((reac_volume / 10), G.amount)
+		new/obj/item/stack/medical/gauze/adv(get_turf(G), reac_volume)
+		G.use(reac_volume)
+
+
 /datum/reagent/iron
 	name = "Iron"
 	description = "Pure iron is a metal."
@@ -1057,7 +1085,7 @@
 /datum/reagent/iron/on_mob_life(mob/living/carbon/C)
 	if((HAS_TRAIT(C, TRAIT_NOMARROW)))
 		return
-	if(C.blood_volume < (BLOOD_VOLUME_NORMAL*C.blood_ratio))
+	if(C.blood_volume < (BLOOD_VOLUME_NORMAL*C.blood_ratio) && !AmBloodsucker(C))
 		C.blood_volume += 0.25
 	..()
 
@@ -1141,6 +1169,13 @@
 
 /mob/living/proc/bluespace_shuffle()
 	do_teleport(src, get_turf(src), 5, asoundin = 'sound/effects/phasein.ogg', channel = TELEPORT_CHANNEL_BLUESPACE)
+
+/datum/reagent/telecrystal
+	name = "Telecrystal Dust"
+	description = "A blood-red dust comprised of something that was much more useful when it was intact."
+	reagent_state = SOLID
+	color = "#660000" // rgb: 102, 0, 0.
+	taste_description = "contraband"
 
 /datum/reagent/aluminium
 	name = "Aluminium"
@@ -1438,10 +1473,12 @@
 
 /datum/reagent/stimulum/on_mob_metabolize(mob/living/L)
 	..()
+	L.add_movespeed_modifier(/datum/movespeed_modifier/reagent/stimulum) // Skyrat
 	ADD_TRAIT(L, TRAIT_STUNIMMUNE, type)
 	ADD_TRAIT(L, TRAIT_SLEEPIMMUNE, type)
 
 /datum/reagent/stimulum/on_mob_end_metabolize(mob/living/L)
+	L.remove_movespeed_modifier(/datum/movespeed_modifier/reagent/stimulum) // Skyrat
 	REMOVE_TRAIT(L, TRAIT_STUNIMMUNE, type)
 	REMOVE_TRAIT(L, TRAIT_SLEEPIMMUNE, type)
 	..()
@@ -1727,6 +1764,22 @@
 			H.facial_hair_style = "Very Long Beard"
 			H.update_hair()
 
+/datum/reagent/baldium
+	name = "Baldium"
+	description = "A major cause of hair loss across the world."
+	reagent_state = LIQUID
+	color = "#ecb2cf"
+	taste_description = "bitterness"
+
+/datum/reagent/baldium/reaction_mob(mob/living/M, method=TOUCH, reac_volume)
+	if(method == TOUCH || method == VAPOR)
+		if(M && ishuman(M))
+			var/mob/living/carbon/human/H = M
+			to_chat(H, "<span class='danger'>Your hair is falling out in clumps!</span>")
+			H.hair_style = "Bald"
+			H.facial_hair_style = "Shaved"
+			H.update_hair()
+
 /datum/reagent/saltpetre
 	name = "Saltpetre"
 	description = "Volatile. Controversial. Third Thing."
@@ -1939,6 +1992,7 @@
 	value = REAGENT_VALUE_COMMON
 	taste_description = "bitterness" // apparently what viagra tastes like
 
+/* moved to modular_skyrat
 /datum/reagent/growthserum/on_mob_life(mob/living/carbon/H)
 	var/newsize = current_size
 	switch(volume)
@@ -1957,6 +2011,7 @@
 	current_size = newsize
 	H.update_transform()
 	..()
+*/
 
 /datum/reagent/growthserum/on_mob_end_metabolize(mob/living/M)
 	M.resize = RESIZE_DEFAULT_SIZE/current_size
@@ -2166,9 +2221,146 @@
 
 	..()
 
-/datum/reagent/preservahyde
+/* /datum/reagent/preservahyde // Skyrat Edit - Relocated to modular_skyrat's medicine_reagents.dm
 	name = "Preservahyde"
 	description = "A powerful preservation agent, utilizing the preservative effects of formaldehyde with significantly less of the histamine."
 	reagent_state = LIQUID
 	color = "#f7685e"
-	metabolization_rate = REAGENTS_METABOLISM * 0.25
+	metabolization_rate = REAGENTS_METABOLISM * 0.25 */ 
+
+
+//body bluids
+/datum/reagent/consumable/semen
+	name = "Semen"
+	description = "Sperm from some animal. Useless for anything but insemination, really."
+	taste_description = "something salty"
+	taste_mult = 2 //Not very overpowering flavor
+	data = list("donor"=null,"viruses"=null,"donor_DNA"=null,"blood_type"=null,"resistances"=null,"trace_chem"=null,"mind"=null,"ckey"=null,"gender"=null,"real_name"=null)
+	reagent_state = LIQUID
+	color = "#FFFFFF" // rgb: 255, 255, 255
+	can_synth = FALSE
+	nutriment_factor = 0.5 * REAGENTS_METABOLISM
+
+/datum/reagent/consumable/semen/reaction_turf(turf/T, reac_volume)
+	if(!istype(T))
+		return
+	if(reac_volume < 10)
+		return
+
+	var/obj/effect/decal/cleanable/semen/S = locate() in T
+	if(!S)
+		S = new(T)
+	if(data["blood_DNA"])
+		S.add_blood_DNA(list("color" = data["blood_DNA"], data["blood_DNA"] = data["blood_type"]))
+
+/obj/effect/decal/cleanable/semen
+	name = "semen"
+	desc = null
+	gender = PLURAL
+	density = 0
+	layer = ABOVE_NORMAL_TURF_LAYER
+	icon = 'icons/obj/genitals/effects.dmi'
+	icon_state = "semen1"
+	random_icon_states = list("semen1", "semen2", "semen3", "semen4")
+
+/obj/effect/decal/cleanable/semen/Initialize(mapload)
+	. = ..()
+	dir = GLOB.cardinals
+	add_blood_DNA(list("color" = bloodtype_to_color("A+"), "Non-human DNA" = "A+"))
+
+/obj/effect/decal/cleanable/semen/replace_decal(obj/effect/decal/cleanable/semen/S)
+	if(S.blood_DNA)
+		blood_DNA |= (S.blood_DNA - "color")
+		blood_DNA["color"] = S.blood_DNA["color"]
+	return ..()
+
+/datum/reagent/consumable/femcum
+	name = "Female Ejaculate"
+	description = "Vaginal lubricant found in most mammals and other animals of similar nature. Where you found this is your own business."
+	taste_description = "something with a tang" // wew coders who haven't eaten out a girl.
+	taste_mult = 2
+	data = list("donor"=null,"viruses"=null,"donor_DNA"=null,"blood_type"=null,"resistances"=null,"trace_chem"=null,"mind"=null,"ckey"=null,"gender"=null,"real_name"=null)
+	reagent_state = LIQUID
+	color = "#AAAAAA77"
+	can_synth = FALSE
+	nutriment_factor = 0.5 * REAGENTS_METABOLISM
+
+/obj/effect/decal/cleanable/femcum
+	name = "female ejaculate"
+	desc = null
+	gender = PLURAL
+	density = 0
+	layer = ABOVE_NORMAL_TURF_LAYER
+	icon = 'icons/obj/genitals/effects.dmi'
+	icon_state = "fem1"
+	random_icon_states = list("fem1", "fem2", "fem3", "fem4")
+	blood_state = null
+	bloodiness = null
+
+/obj/effect/decal/cleanable/femcum/Initialize(mapload)
+	. = ..()
+	dir = GLOB.cardinals
+	add_blood_DNA(list("color" = bloodtype_to_color("A+"), "Non-human DNA" = "A+"))
+
+/obj/effect/decal/cleanable/femcum/replace_decal(obj/effect/decal/cleanable/femcum/F)
+	if(F.blood_DNA)
+		blood_DNA |= (F.blood_DNA - "color")
+		blood_DNA["color"] = F.blood_DNA["color"]
+	return ..()
+
+/datum/reagent/consumable/femcum/reaction_turf(turf/T, reac_volume)
+	if(!istype(T))
+		return
+	if(reac_volume < 10)
+		return
+
+	var/obj/effect/decal/cleanable/femcum/S = locate() in T
+	if(!S)
+		S = new(T)
+	if(data["blood_DNA"])
+		S.add_blood_DNA(list("color" = data["bloodcolor"], data["blood_DNA"] = data["blood_type"]))
+
+/datum/reagent/cellulose
+	name = "Cellulose Fibers"
+	description = "A crystaline polydextrose polymer, plants swear by this stuff."
+	reagent_state = SOLID
+	color = "#E6E6DA"
+	taste_mult = 0
+
+//skyrat edit
+/datum/reagent/determination
+	name = "Determination"
+	description = "For when you need to push on a little more. Do NOT allow near plants."
+	reagent_state = LIQUID
+	color = "#D2FFFA"
+	metabolization_rate = 0.75 * REAGENTS_METABOLISM // 5u (WOUND_DETERMINATION_CRITICAL) will last for ~17 ticks
+	/// Whether we've had at least WOUND_DETERMINATION_SEVERE (2.5u) of determination at any given time. No damage slowdown immunity or indication we're having a second wind if it's just a single moderate wound
+	var/significant = FALSE
+	process_flags = REAGENT_ORGANIC | REAGENT_SYNTHETIC
+
+/datum/reagent/determination/on_mob_end_metabolize(mob/living/carbon/M)
+	if(significant)
+		var/stam_crash = 0
+		for(var/thing in M.all_wounds)
+			var/datum/wound/W = thing
+			if(istype(W))
+				stam_crash += (W.severity + 1) * 3 // spike of 3 stam damage per wound severity (moderate = 6, severe = 9, critical = 12) when the determination wears off if it was a combat rush
+		M.adjustStaminaLoss(stam_crash)
+	M.remove_status_effect(STATUS_EFFECT_DETERMINED)
+	..()
+
+/datum/reagent/determination/on_mob_life(mob/living/carbon/M)
+	if(!significant && volume >= WOUND_DETERMINATION_SEVERE)
+		significant = TRUE
+		M.apply_status_effect(STATUS_EFFECT_DETERMINED) // in addition to the slight healing, limping cooldowns are divided by 4 during the combat high
+
+	volume = min(volume, WOUND_DETERMINATION_MAX)
+
+	for(var/thing in M.all_wounds)
+		var/datum/wound/W = thing
+		if(istype(W))
+			var/obj/item/bodypart/wounded_part = W.limb
+			if(istype(wounded_part))
+				wounded_part.heal_damage(0.25, 0.25)
+			M.adjustStaminaLoss(-0.25*REM) // the more wounds, the more stamina regen
+	..()

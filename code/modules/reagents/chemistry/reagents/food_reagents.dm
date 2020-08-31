@@ -13,11 +13,12 @@
 	taste_mult = 4
 	value = REAGENT_VALUE_VERY_COMMON
 	var/nutriment_factor = 1 * REAGENTS_METABOLISM
+	var/max_nutrition = INFINITY
 	var/quality = 0	//affects mood, typically higher for mixed drinks with more complex recipes
 
 /datum/reagent/consumable/on_mob_life(mob/living/carbon/M)
 	current_cycle++
-	M.nutrition += nutriment_factor
+	M.adjust_nutrition(nutriment_factor, max_nutrition)
 	M.CheckBloodsuckerEatFood(nutriment_factor)
 	holder.remove_reagent(type, metabolization_rate)
 
@@ -114,11 +115,11 @@
 
 /datum/reagent/consumable/cooking_oil/reaction_obj(obj/O, reac_volume)
 	if(holder && holder.chem_temp >= fry_temperature)
-		if(isitem(O) && !istype(O, /obj/item/reagent_containers/food/snacks/deepfryholder) && !(O.resistance_flags & (FIRE_PROOF|INDESTRUCTIBLE)))
+		if(isitem(O) && !O.GetComponent(/datum/component/fried) && !(O.resistance_flags & (FIRE_PROOF|INDESTRUCTIBLE)) && (!O.reagents || isfood(O))) //don't fry stuff we shouldn't
 			O.loc.visible_message("<span class='warning'>[O] rapidly fries as it's splashed with hot oil! Somehow.</span>")
-			var/obj/item/reagent_containers/food/snacks/deepfryholder/F = new(O.drop_location(), O)
-			F.fry(volume)
-			F.reagents.add_reagent(/datum/reagent/consumable/cooking_oil, reac_volume)
+			O.fry(volume)
+			if(O.reagents)
+				O.reagents.add_reagent(/datum/reagent/consumable/cooking_oil, reac_volume)
 
 /datum/reagent/consumable/cooking_oil/reaction_mob(mob/living/M, method = TOUCH, reac_volume, show_message = 1, touch_protection = 0)
 	if(!istype(M))
@@ -131,8 +132,8 @@
 			"<span class='userdanger'>You're covered in boiling oil!</span>")
 			M.emote("scream")
 			playsound(M, 'sound/machines/fryer/deep_fryer_emerge.ogg', 25, TRUE)
-			var/oil_damage = (holder.chem_temp / fry_temperature) * 0.33 //Damage taken per unit
-			M.adjustFireLoss(min(35, oil_damage * reac_volume)) //Damage caps at 35
+			var/oil_damage = min(holder.chem_temp / fry_temperature,1) //Damage taken per unit
+			M.adjustFireLoss(oil_damage * max(reac_volume,40)) //Damage caps at 40
 	else
 		..()
 	return TRUE
@@ -140,10 +141,9 @@
 /datum/reagent/consumable/cooking_oil/reaction_turf(turf/open/T, reac_volume)
 	if(!istype(T) || isgroundlessturf(T))
 		return
-	if(reac_volume >= 5)
+	if(reac_volume >= 5 && holder && holder.chem_temp >= fry_temperature)
 		T.MakeSlippery(TURF_WET_LUBE, min_wet_time = 10 SECONDS, wet_time_to_add = reac_volume * 1.5 SECONDS)
-		T.name = "deep-fried [initial(T.name)]"
-		T.add_atom_colour(color, TEMPORARY_COLOUR_PRIORITY)
+		T.fry(reac_volume/4)
 
 /datum/reagent/consumable/sugar
 	name = "Sugar"
@@ -694,13 +694,10 @@
 	description = "A bioengineered protien-nutrient structure designed to decompose in high saturation. In layman's terms, it won't get you fat."
 	reagent_state = SOLID
 	nutriment_factor = 12 * REAGENTS_METABOLISM
+	max_nutrition = NUTRITION_LEVEL_FULL - 25
 	color = "#664330" // rgb: 102, 67, 48
 	value = REAGENT_VALUE_RARE
 
-/datum/reagent/consumable/nutriment/stabilized/on_mob_life(mob/living/carbon/M)
-	if(M.nutrition > NUTRITION_LEVEL_FULL - 25)
-		M.nutrition -= 3*nutriment_factor
-	..()
 
 ////Lavaland Flora Reagents////
 
@@ -859,3 +856,13 @@
 	taste_mult = 2.5 //sugar's 1.5, capsacin's 1.5, so a good middle ground.
 	taste_description = "smokey sweetness"
 	value = REAGENT_VALUE_COMMON
+
+/datum/reagent/consumable/laughsyrup
+	name = "Laughin' Syrup"
+	description = "The product of juicing Laughin' Peas. Fizzy, and seems to change flavour based on what it's used with!"
+	nutriment_factor = 5 * REAGENTS_METABOLISM
+	color = "#803280"
+	taste_mult = 2
+	taste_description = "fizzy sweetness"
+	value = REAGENT_VALUE_COMMON
+

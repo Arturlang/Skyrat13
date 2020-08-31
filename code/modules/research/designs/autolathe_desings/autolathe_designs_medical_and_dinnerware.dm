@@ -8,7 +8,7 @@
 /datum/design/kitchen_knife
 	name = "Kitchen Knife"
 	id = "kitchen_knife"
-	build_type = AUTOLATHE
+	build_type = AUTOLATHE | NO_PUBLIC_LATHE
 	materials = list(/datum/material/iron = 12000)
 	build_path = /obj/item/kitchen/knife
 	category = list("initial","Dinnerware")
@@ -140,7 +140,7 @@
 /datum/design/healthanalyzer
 	name = "Health Analyzer"
 	id = "healthanalyzer"
-	build_type = AUTOLATHE | PROTOLATHE
+	build_type = AUTOLATHE | PROTOLATHE | NO_PUBLIC_LATHE
 	materials = list(/datum/material/iron = 500, /datum/material/glass = 50)
 	build_path = /obj/item/healthanalyzer
 	category = list("initial", "Medical")
@@ -187,4 +187,23 @@
 	materials = list(/datum/material/iron = 2500)
 	build_path = /obj/item/reagent_containers/glass/bottle/vial/large
 	category = list("initial","Medical","Medical Designs")
+	departmental_flags = DEPARTMENTAL_FLAG_MEDICAL
+
+//skyrat edit
+/datum/design/bonesetter
+	name = "Bonesetter"
+	id = "bonesetter"
+	build_type = AUTOLATHE | PROTOLATHE
+	materials = list(/datum/material/iron = 1000)
+	build_path = /obj/item/bonesetter
+	category = list("initial", "Medical", "Tool Designs")
+	departmental_flags = DEPARTMENTAL_FLAG_MEDICAL | DEPARTMENTAL_FLAG_SCIENCE
+
+/datum/design/sticky_tape/surgical
+	name = "Surgical Tape"
+	id = "surgical_tape"
+	build_type = PROTOLATHE
+	materials = list(/datum/material/plastic = 500)
+	build_path = /obj/item/stack/sticky_tape/surgical
+	category = list("initial", "Medical")
 	departmental_flags = DEPARTMENTAL_FLAG_MEDICAL

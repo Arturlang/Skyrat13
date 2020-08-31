@@ -23,7 +23,8 @@ Difficulty: Hard
 /mob/living/simple_animal/hostile/megafauna/bubblegum/hard
 	name = "enraged bubblegum"
 	desc = "In what passes for a hierarchy among slaughter demons, this one is god."
-	attacktext = "brutally rends"
+	attack_verb_continuous = "brutally rends"
+	attack_verb_simple = "brutally rend"
 	speed = 5
 	move_to_delay = 5
 	retreat_distance = 5
@@ -38,8 +39,8 @@ Difficulty: Hard
 	var/enrage_till = 0
 	var/enrage_time = 70
 	var/revving_charge = FALSE
-	var/nest_range = 10
-	var/true_spawn = TRUE
+	nest_range = 10
+	true_spawn = TRUE
 
 	deathmessage = "sinks into a pool of blood, fleeing the battle. You've won, for now, slayer... "
 	deathsound = 'sound/magic/enter_blood.ogg'
@@ -184,7 +185,7 @@ obj/item/gps/internal/bubblegum/hard
 			to_chat(L, "<span class='userdanger'>[src] rends you!</span>")
 			playsound(T, attack_sound, 100, TRUE, -1)
 			var/limb_to_hit = L.get_bodypart(pick(BODY_ZONE_HEAD, BODY_ZONE_CHEST, BODY_ZONE_R_ARM, BODY_ZONE_L_ARM, BODY_ZONE_R_LEG, BODY_ZONE_L_LEG))
-			L.apply_damage(10, BRUTE, limb_to_hit, L.run_armor_check(limb_to_hit, "melee", null, null, armour_penetration))
+			L.apply_damage(10, BRUTE, limb_to_hit, L.run_armor_check(limb_to_hit, "melee", null, null, armour_penetration), 0, 0, CANT_WOUND)
 	sleep(3)
 
 /mob/living/simple_animal/hostile/megafauna/bubblegum/hard/proc/bloodgrab(turf/T, handedness)
@@ -400,7 +401,7 @@ obj/item/gps/internal/bubblegum/hard
 			var/mob/living/L = A
 			L.visible_message("<span class='danger'>[src] slams into [L]!</span>", "<span class='userdanger'>[src] tramples you into the ground!</span>")
 			src.forceMove(get_turf(L))
-			L.apply_damage(istype(src, /mob/living/simple_animal/hostile/megafauna/bubblegum/hard/hallucination) ? 15 : 30, BRUTE)
+			L.apply_damage(istype(src, /mob/living/simple_animal/hostile/megafauna/bubblegum/hard/hallucination) ? 15 : 30, BRUTE, null, null, null, null, CANT_WOUND)
 			playsound(get_turf(L), 'sound/effects/meteorimpact.ogg', 100, TRUE)
 			shake_camera(L, 4, 3)
 			shake_camera(src, 2, 3)
@@ -444,6 +445,7 @@ obj/item/gps/internal/bubblegum/hard
 	deathmessage = "Explodes into a pool of blood!"
 	deathsound = 'sound/effects/splat.ogg'
 	true_spawn = FALSE
+	mouse_opacity = 0 //This is so clients wont hover and store them, causing them to fail GC
 
 /mob/living/simple_animal/hostile/megafauna/bubblegum/hard/hallucination/Initialize()
 	..()

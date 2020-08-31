@@ -1,3 +1,4 @@
+/* moved to modular_skyrat
 /obj/item/organ/cyberimp/chest
 	name = "cybernetic torso implant"
 	desc = "Implants for the organs in your torso."
@@ -23,7 +24,7 @@
 	if(owner.nutrition <= hunger_threshold)
 		synthesizing = TRUE
 		to_chat(owner, "<span class='notice'>You feel less hungry...</span>")
-		owner.nutrition += 50
+		owner.adjust_nutrition(50)
 		addtimer(CALLBACK(src, .proc/synth_cool), 50)
 
 /obj/item/organ/cyberimp/chest/nutriment/proc/synth_cool()
@@ -221,3 +222,4 @@
 
 	toggle(silent = TRUE)
 	return 0
+*/

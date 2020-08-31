@@ -18,12 +18,15 @@
 	QDEL_LIST(bodyparts)
 	QDEL_LIST(implants)
 	hand_bodyparts = null		//Just references out bodyparts, don't need to delete twice.
+	//skyrat edit
+	for(var/wound in all_wounds) // these LAZYREMOVE themselves when deleted so no need to remove the list here
+		qdel(wound)
+	for(var/scar in all_scars)
+		qdel(scar)
+	//
 	remove_from_all_data_huds()
 	QDEL_NULL(dna)
 	GLOB.carbon_list -= src
-
-/mob/living/carbon/initialize_footstep()
-	AddComponent(/datum/component/footstep, 0.6, 2)
 
 /mob/living/carbon/relaymove(mob/user, direction)
 	if(user in src.stomach_contents)
@@ -50,16 +53,13 @@
 
 
 /mob/living/carbon/swap_hand(held_index)
+	. = ..()
+	if(!.)
+		var/obj/item/held_item = get_active_held_item()
+		to_chat(usr, "<span class='warning'>Your other hand is too busy holding [held_item].</span>")
+		return
 	if(!held_index)
 		held_index = (active_hand_index % held_items.len)+1
-
-	var/obj/item/item_in_hand = src.get_active_held_item()
-	if(item_in_hand) //this segment checks if the item in your hand is twohanded.
-		var/obj/item/twohanded/TH = item_in_hand
-		if(istype(TH))
-			if(TH.wielded == 1)
-				to_chat(usr, "<span class='warning'>Your other hand is too busy holding [TH]</span>")
-				return
 	var/oindex = active_hand_index
 	active_hand_index = held_index
 	if(hud_used)
@@ -89,16 +89,42 @@
 		mode() // Activate held item
 
 /mob/living/carbon/attackby(obj/item/I, mob/user, params)
-	if(lying && surgeries.len)
-		if(user != src && (user.a_intent == INTENT_HELP || user.a_intent == INTENT_DISARM))
+	if(surgeries.len)
+		if(user.a_intent == INTENT_HELP || user.a_intent == INTENT_DISARM)
 			for(var/datum/surgery/S in surgeries)
-				if(S.next_step(user,user.a_intent))
-					return 1
+				if(!S.lying_required || (S.lying_required && lying))
+					if(S.next_step(user,user.a_intent))
+						return 1
+	//skyrat edit
+	if(!all_wounds || !all_wounds.len || !(user.a_intent == INTENT_HELP || user == src))
+		return ..()
+	//
+
+	// The following priority/nonpriority searching is so that if we have two wounds on a limb that use the same item for treatment,
+	// we prefer whichever wound is not already treated. If there's no priority wounds that this can treat, go through the
+	// non-priority ones randomly.
+	var/list/nonpriority_wounds = list()
+	for(var/datum/wound/W in shuffle(all_wounds))
+		if(!W.treat_priority)
+			nonpriority_wounds += W
+		else if(W.treat_priority && W.try_treating(I, user))
+			return 1
+
+	for(var/datum/wound/W in shuffle(nonpriority_wounds))
+		if(W.try_treating(I, user))
+			return 1
+
+	//
 	return ..()
 
 /mob/living/carbon/throw_impact(atom/hit_atom, datum/thrownthing/throwingdatum)
 	. = ..()
 	var/hurt = TRUE
+	//skyrat edit
+	var/extra_speed = 0
+	if(throwingdatum.thrower != src)
+		extra_speed = min(max(0, throwingdatum.speed - initial(throw_speed)), 3)
+	//
 	if(GetComponent(/datum/component/tackler))
 		return
 	if(throwingdatum?.thrower && iscyborg(throwingdatum.thrower))
@@ -108,18 +134,22 @@
 	if(hit_atom.density && isturf(hit_atom))
 		if(hurt)
 			DefaultCombatKnockdown(20)
-			take_bodypart_damage(10)
+			take_bodypart_damage(10 + 5 * extra_speed, check_armor = TRUE, wound_bonus = extra_speed) //skyrat edit
 	if(iscarbon(hit_atom) && hit_atom != src)
 		var/mob/living/carbon/victim = hit_atom
 		if(victim.movement_type & FLYING)
 			return
 		if(hurt)
-			victim.take_bodypart_damage(10)
-			take_bodypart_damage(10)
+			//skyrat edit
+			victim.take_bodypart_damage(10 + 5 * extra_speed, check_armor = TRUE, wound_bonus = extra_speed * 5)
+			take_bodypart_damage(10 + 5 * extra_speed, check_armor = TRUE, wound_bonus = extra_speed * 5)
+			//
 			victim.DefaultCombatKnockdown(20)
 			DefaultCombatKnockdown(20)
-			visible_message("<span class='danger'>[src] crashes into [victim], knocking them both over!</span>",\
-				"<span class='userdanger'>You violently crash into [victim]!</span>")
+			//skyrat edit
+			visible_message("<span class='danger'>[src] crashes into [victim] [extra_speed ? "really hard" : ""], knocking them both over!</span>",\
+				"<span class='userdanger'>You violently crash into [victim] [extra_speed ? "extra hard" : ""]!</span>")
+			//
 		playsound(src,'sound/weapons/punch1.ogg',50,1)
 
 
@@ -184,13 +214,23 @@
 			if(HAS_TRAIT(src, TRAIT_PACIFISM))
 				to_chat(src, "<span class='notice'>You gently let go of [throwable_mob].</span>")
 				return
-
-			adjustStaminaLossBuffered(25)//CIT CHANGE - throwing an entire person shall be very tiring
+			//skyrat edit
+			adjustStaminaLossBuffered(STAM_COST_THROW_MOB * ((throwable_mob.mob_size+1)**2))// throwing an entire person shall be very tiring
 			var/turf/start_T = get_turf(loc) //Get the start and target tile for the descriptors
 			var/turf/end_T = get_turf(target)
 			if(start_T && end_T)
 				log_combat(src, throwable_mob, "thrown", addition="grab from tile in [AREACOORD(start_T)] towards tile at [AREACOORD(end_T)]")
-
+			var/power_throw = 0
+			if(HAS_TRAIT(src, TRAIT_HULK))
+				power_throw++
+			if(pulling && grab_state >= GRAB_NECK)
+				power_throw++
+			visible_message("<span class='danger'>[src] throws [throwable_mob][power_throw ? " really hard!" : "."]</span>", \
+							"<span class='danger'>You throw [throwable_mob][power_throw ? " really hard!" : "."]</span>")
+			log_message("has thrown [throwable_mob] [power_throw ? "really hard" : ""]", LOG_ATTACK)
+			newtonian_move(get_dir(target, src))
+			throwable_mob.safe_throw_at(target, throwable_mob.throw_range, throwable_mob.throw_speed + power_throw, src, null, null, null, move_force)
+			//
 	else if(!CHECK_BITFIELD(I.item_flags, ABSTRACT) && !HAS_TRAIT(I, TRAIT_NODROP))
 		thrown_thing = I
 		dropItemToGround(I)
@@ -199,13 +239,16 @@
 			to_chat(src, "<span class='notice'>You set [I] down gently on the ground.</span>")
 			return
 
-		adjustStaminaLossBuffered(I.getweight()*2)//CIT CHANGE - throwing items shall be more tiring than swinging em. Doubly so.
+		adjustStaminaLossBuffered(I.getweight(src, STAM_COST_THROW_MULT, SKILL_THROW_STAM_COST))
 
 	if(thrown_thing)
 		visible_message("<span class='danger'>[src] has thrown [thrown_thing].</span>")
 		log_message("has thrown [thrown_thing]", LOG_ATTACK)
 		do_attack_animation(target, no_effect = 1)
-		playsound(loc, 'sound/weapons/punchmiss.ogg', 50, 1, -1)
+//SKYRAT CHANGES BEGIN
+		if(throwforce)
+			playsound(loc, 'sound/weapons/punchmiss.ogg', 50, TRUE, -1)
+//SKYRAT CHANGES END
 		newtonian_move(get_dir(target, src))
 		thrown_thing.safe_throw_at(target, thrown_thing.throw_range, thrown_thing.throw_speed, src, null, null, null, move_force, random_turn)
 
@@ -250,13 +293,14 @@
 /mob/living/carbon/Topic(href, href_list)
 	..()
 	//strip panel
-	if(usr.canUseTopic(src, BE_CLOSE, NO_DEXTERY))
+	if(usr.canUseTopic(src, BE_CLOSE))
 		if(href_list["internal"] && !HAS_TRAIT(src, TRAIT_NO_INTERNALS))
 			var/slot = text2num(href_list["internal"])
 			var/obj/item/ITEM = get_item_by_slot(slot)
 			if(ITEM && istype(ITEM, /obj/item/tank) && wear_mask && (wear_mask.clothing_flags & ALLOWINTERNALS))
 				visible_message("<span class='danger'>[usr] tries to [internal ? "close" : "open"] the valve on [src]'s [ITEM.name].</span>", \
-								"<span class='userdanger'>[usr] tries to [internal ? "close" : "open"] the valve on [src]'s [ITEM.name].</span>")
+								"<span class='userdanger'>[usr] tries to [internal ? "close" : "open"] the valve on your [ITEM.name].</span>", \
+								target = usr, target_message = "<span class='danger'>You try to [internal ? "close" : "open"] the valve on [src]'s [ITEM.name].</span>")
 				if(do_mob(usr, src, POCKET_STRIP_DELAY))
 					if(internal)
 						internal = null
@@ -267,8 +311,17 @@
 							update_internals_hud_icon(1)
 
 					visible_message("<span class='danger'>[usr] [internal ? "opens" : "closes"] the valve on [src]'s [ITEM.name].</span>", \
-									"<span class='userdanger'>[usr] [internal ? "opens" : "closes"] the valve on [src]'s [ITEM.name].</span>")
-
+									"<span class='userdanger'>[usr] [internal ? "opens" : "closes"] the valve on your [ITEM.name].</span>", \
+									target = usr, target_message = "<span class='danger'>You [internal ? "opens" : "closes"] the valve on [src]'s [ITEM.name].</span>")
+	if(href_list["embedded_object"] && usr.canUseTopic(src, BE_CLOSE))
+		var/obj/item/bodypart/L = locate(href_list["embedded_limb"]) in bodyparts
+		if(!L)
+			return
+		var/obj/item/I = locate(href_list["embedded_object"]) in L.embedded_objects
+		if(!I || I.loc != src) //no item, no limb, or item is not in limb or in the person anymore
+			return
+		SEND_SIGNAL(src, COMSIG_CARBON_EMBED_RIP, I, L)
+		return
 
 /mob/living/carbon/fall(forced)
 	loc.handle_fall(src, forced)//it's loc so it doesn't call the mob's handle_fall which does nothing
@@ -433,10 +486,9 @@
 			return
 
 /mob/living/carbon/get_standard_pixel_y_offset(lying = 0)
+	. = ..()
 	if(lying)
-		return -6
-	else
-		return initial(pixel_y)
+		. -= 6
 
 /mob/living/carbon/proc/accident(obj/item/I)
 	if(!I || (I.item_flags & ABSTRACT) || HAS_TRAIT(I, TRAIT_NODROP))
@@ -444,14 +496,14 @@
 
 	//dropItemToGround(I) CIT CHANGE - makes it so the item doesn't drop if the modifier rolls above 100
 
-	var/modifier = 0
+	var/modifier = 50
 
 	if(HAS_TRAIT(src, TRAIT_CLUMSY))
 		modifier -= 40 //Clumsy people are more likely to hit themselves -Honk!
 
 	//CIT CHANGES START HERE
-	else if(combat_flags & COMBAT_FLAG_COMBAT_ACTIVE)
-		modifier += 50
+	else if(SEND_SIGNAL(src, COMSIG_COMBAT_MODE_CHECK, COMBAT_MODE_INACTIVE))
+		modifier -= 50
 
 	if(modifier < 100)
 		dropItemToGround(I)
@@ -520,7 +572,7 @@
 	playsound(get_turf(src), 'sound/effects/splat.ogg', 50, 1)
 	var/turf/T = get_turf(src)
 	if(!blood)
-		nutrition -= lost_nutrition
+		adjust_nutrition(-lost_nutrition)
 		adjustToxLoss(-3)
 	for(var/i=0 to distance)
 		if(blood)
@@ -540,15 +592,22 @@
 	return 1
 
 /mob/living/carbon/proc/spew_organ(power = 5, amt = 1)
+	var/list/spillable_organs = list()
+	for(var/A in internal_organs)
+		var/obj/item/organ/O = A
+		if(!(O.organ_flags & ORGAN_NO_DISMEMBERMENT))
+			spillable_organs += O
 	for(var/i in 1 to amt)
-		if(!internal_organs.len)
+		if(!spillable_organs.len)
 			break //Guess we're out of organs!
-		var/obj/item/organ/guts = pick(internal_organs)
+		var/obj/item/organ/guts = pick(spillable_organs)
+		spillable_organs -= guts
 		var/turf/T = get_turf(src)
 		guts.Remove()
 		guts.forceMove(T)
 		var/atom/throw_target = get_edge_target_turf(guts, dir)
 		guts.throw_at(throw_target, power, 4, src)
+
 
 
 /mob/living/carbon/fully_replace_character_name(oldname,newname)
@@ -822,16 +881,17 @@
 			return
 		if(IsUnconscious() || IsSleeping() || getOxyLoss() > 50 || (HAS_TRAIT(src, TRAIT_DEATHCOMA)) || (health <= HEALTH_THRESHOLD_FULLCRIT && !HAS_TRAIT(src, TRAIT_NOHARDCRIT)))
 			stat = UNCONSCIOUS
-			disable_intentional_combat_mode(FALSE, FALSE)
+			SEND_SIGNAL(src, COMSIG_DISABLE_COMBAT_MODE)
 			if(!eye_blind)
 				blind_eyes(1)
 		else
 			if(health <= crit_threshold && !HAS_TRAIT(src, TRAIT_NOSOFTCRIT))
 				stat = SOFT_CRIT
-				disable_intentional_combat_mode(FALSE, FALSE)
+				SEND_SIGNAL(src, COMSIG_DISABLE_COMBAT_MODE)
 			else
 				stat = CONSCIOUS
-			adjust_blindness(-1)
+			if(eye_blind <= 1)
+				adjust_blindness(-1)
 		update_mobility()
 	update_damage_hud()
 	update_health_hud()
@@ -881,6 +941,16 @@
 		var/datum/disease/D = thing
 		if(D.severity != DISEASE_SEVERITY_POSITIVE)
 			D.cure(FALSE)
+	//skyrat edit
+	for(var/i in all_wounds)
+		var/datum/wound/w = i
+		if(istype(w))
+			w.remove_wound(FALSE, TRUE)
+	for(var/i in all_scars)
+		var/datum/scar/s = i
+		if(istype(s) && !s.permanent)
+			s.Destroy()
+	//
 	if(admin_revive)
 		regenerate_limbs()
 		regenerate_organs()
@@ -900,6 +970,8 @@
 /mob/living/carbon/can_be_revived()
 	. = ..()
 	if(!getorgan(/obj/item/organ/brain) && (!mind || !mind.has_antag_datum(/datum/antagonist/changeling)))
+		return 0
+	if(HAS_TRAIT(src, TRAIT_DNR))
 		return 0
 
 /mob/living/carbon/harvest(mob/living/user)
@@ -943,7 +1015,7 @@
 		C.forceMove(src)
 		stomach_contents.Add(C)
 		log_combat(src, C, "devoured")
-
+/* moved to modular_skyrat
 /mob/living/carbon/proc/create_bodyparts()
 	var/l_arm_index_next = -1
 	var/r_arm_index_next = 0
@@ -960,7 +1032,7 @@
 			r_arm_index_next += 2
 			O.held_index = r_arm_index_next //2, 4, 6, 8...
 			hand_bodyparts += O
-
+*/
 /mob/living/carbon/do_after_coefficent()
 	. = ..()
 	var/datum/component/mood/mood = src.GetComponent(/datum/component/mood) //Currently, only carbons or higher use mood, move this once that changes.
@@ -1117,10 +1189,6 @@
 		if(mood.sanity < SANITY_UNSTABLE)
 			return TRUE
 
-/mob/living/carbon/transfer_ckey(mob/new_mob, send_signal = TRUE)
-	disable_intentional_combat_mode(TRUE, FALSE)
-	return ..()
-
 /mob/living/carbon/can_see_reagents()
 	. = ..()
 	if(.) //No need to run through all of this if it's already true.
@@ -1150,3 +1218,66 @@
 			dna.features["body_model"] = MALE
 	if(update_icon)
 		update_body()
+
+//skyrat edit
+/**
+  * generate_fake_scars()- for when you want to scar someone, but you don't want to hurt them first. These scars don't count for temporal scarring (hence, fake)
+  *
+  * If you want a specific wound scar, pass that wound type as the second arg, otherwise you can pass a list like WOUND_LIST_SLASH to generate a random cut scar.
+  *
+  * Arguments:
+  * * num_scars- A number for how many scars you want to add
+  * * forced_type- Which wound or category of wounds you want to choose from, WOUND_LIST_BLUNT, WOUND_LIST_SLASH, WOUND_LIST_PIERCE, or WOUND_LIST_BURN (or some combination). If passed a list, picks randomly from the listed wounds. Defaults to all 3 types
+  */
+/mob/living/carbon/proc/generate_fake_scars(num_scars, forced_type, permanent = FALSE)
+	for(var/i in 1 to num_scars)
+		var/datum/scar/S = new
+		var/obj/item/bodypart/BP = pick(bodyparts)
+
+		var/wound_type
+		if(forced_type)
+			if(islist(forced_type))
+				wound_type = pick(forced_type)
+			else
+				wound_type = forced_type
+		else
+			wound_type = pick(WOUND_LIST_BLUNT + WOUND_LIST_SLASH + WOUND_LIST_BURN + WOUND_LIST_PIERCE)
+
+		var/datum/wound/W = new wound_type
+		S.generate(BP, W)
+		S.fake = TRUE
+		if(permanent)
+			S.permanent = TRUE
+		QDEL_NULL(W)
+
+/mob/living/carbon/proc/get_total_bleed_rate()
+	var/total_bleed_rate = 0
+	for(var/i in bodyparts)
+		var/obj/item/bodypart/BP = i
+		total_bleed_rate += BP.get_bleed_rate()
+
+	return total_bleed_rate
+
+/// if any of our bodyparts are bleeding
+/mob/living/carbon/proc/is_bleeding()
+	for(var/i in bodyparts)
+		var/obj/item/bodypart/BP = i
+		if(BP.get_bleed_rate())
+			return TRUE
+
+// Check if any of our limbs is gauzed
+/mob/living/proc/has_gauze()
+	return FALSE
+
+/mob/living/carbon/has_gauze()
+	for(var/obj/item/bodypart/limb in bodyparts)
+		if(limb.current_gauze)
+			return limb.current_gauze
+
+// If our face is visible
+/mob/living/carbon/is_face_visible()
+	return !(wear_mask?.flags_inv & HIDEFACE) && !(head?.flags_inv & HIDEFACE)
+
+//skyrat funny
+/mob/living/carbon/proc/get_biological_state()
+	. = BIO_INORGANIC

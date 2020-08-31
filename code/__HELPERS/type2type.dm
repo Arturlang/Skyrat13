@@ -629,3 +629,70 @@
 			return null
 		r += ascii2text(c)
 	return r
+
+/proc/slot_to_string(slot)
+	switch(slot)
+		if(SLOT_BACK)
+			return "Backpack"
+		if(SLOT_WEAR_MASK)
+			return "Mask"
+		if(SLOT_HANDS)
+			return "Hands"
+		if(SLOT_BELT)
+			return "Belt"
+		if(SLOT_EARS)
+			return "Ears"
+		if(SLOT_GLASSES)
+			return "Glasses"
+		if(SLOT_GLOVES)
+			return "Gloves"
+		if(SLOT_NECK)
+			return "Neck"
+		if(SLOT_HEAD)
+			return "Head"
+		if(SLOT_SHOES)
+			return "Shoes"
+		if(SLOT_WEAR_SUIT)
+			return "Suit"
+		if(SLOT_W_UNIFORM)
+			return "Uniform"
+		if(SLOT_IN_BACKPACK)
+			return "In backpack"
+
+/proc/tg_ui_icon_to_cit_ui(ui_style)
+	switch(ui_style)
+		if('icons/mob/screen_plasmafire.dmi')
+			return 'modular_citadel/icons/ui/screen_plasmafire.dmi'
+		if('icons/mob/screen_slimecore.dmi')
+			return 'modular_citadel/icons/ui/screen_slimecore.dmi'
+		if('icons/mob/screen_operative.dmi')
+			return 'modular_citadel/icons/ui/screen_operative.dmi'
+		if('icons/mob/screen_clockwork.dmi')
+			return 'modular_citadel/icons/ui/screen_clockwork.dmi'
+		else
+			return 'modular_citadel/icons/ui/screen_midnight.dmi'
+
+//skyrat stuff
+/// For finding out what body parts a body zone covers, the inverse of the below basically
+/proc/zone2body_parts_covered(def_zone)
+	switch(def_zone)
+		if(BODY_ZONE_CHEST)
+			return list(CHEST, GROIN)
+		if(BODY_ZONE_HEAD)
+			return list(HEAD)
+		if(BODY_ZONE_L_ARM)
+			return list(ARM_LEFT)
+		if(BODY_ZONE_PRECISE_L_HAND)
+			return list(HAND_LEFT)
+		if(BODY_ZONE_R_ARM)
+			return list(ARM_RIGHT)
+		if(BODY_ZONE_PRECISE_R_HAND)
+			return list(HAND_RIGHT)
+		if(BODY_ZONE_L_LEG)
+			return list(LEG_LEFT)
+		if(BODY_ZONE_PRECISE_L_FOOT)
+			return list(FOOT_LEFT)
+		if(BODY_ZONE_R_LEG)
+			return list(LEG_RIGHT)
+		if(BODY_ZONE_PRECISE_R_FOOT)
+			return list(FOOT_RIGHT)

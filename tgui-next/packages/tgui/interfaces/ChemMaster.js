@@ -17,7 +17,9 @@ export const ChemMaster = props => {
     pillBottleCurrentAmount,
     pillBottleMaxAmount,
   } = data;
-
+  if (screen === "analyze") {
+    return <AnalysisResults state={state} />;
+  }
   return (
     <Fragment>
       <Section
@@ -209,6 +211,7 @@ class PackagingControls extends Component {
       packAmount: 1,
       vialAmount: 1,
       dartAmount: 1,
+      injectorAmount: 1,
     };
   }
 
@@ -222,6 +225,7 @@ class PackagingControls extends Component {
       packAmount,
       vialAmount,
       dartAmount,
+      injectorAmount,
     } = this.state;
     const {
       condi,
@@ -320,6 +324,21 @@ class PackagingControls extends Component {
               volume: 'auto',
             })} />
         )}
+        {!condi && (
+          <PackagingControlsItem
+            label="Medipens"
+            amount={injectorAmount}
+            amountUnit="medipens"
+            sideNote="max 10u"
+            onChangeAmount={(e, value) => this.setState({
+              injectorAmount: value,
+            })}
+            onCreate={() => act(ref, 'create', {
+              type: 'injector',
+              amount: injectorAmount,
+              volume: 'auto',
+            })} />
+        )}
         {!!condi && (
           <PackagingControlsItem
             label="Packs"
@@ -356,9 +375,9 @@ class PackagingControls extends Component {
 }
 
 const AnalysisResults = props => {
-  const { state, fermianalyze } = props;
+  const { state } = props;
   const { ref } = state.config;
-  const { analyzeVars } = state.data;
+  const { analyzeVars, fermianalyze } = state.data;
   return (
     <Section
       title="Analysis Results"

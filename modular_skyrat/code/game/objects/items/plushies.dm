@@ -3,6 +3,11 @@
 	icon_state = "lyssa"
 	item_state = "lyssa"
 
+/obj/item/toy/plush/lizardplushie/katra
+	icon = 'modular_skyrat/icons/obj/plushies.dmi'
+	icon_state = "katra"
+	item_state = "katra"
+
 /obj/item/toy/plush/lizardplushie/stalks
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
 	icon_state = "stalks"
@@ -70,6 +75,7 @@
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
 	icon_state = "taff"
 	item_state = "taff"
+
 /obj/item/toy/plush/mammal/odrew/gorelord
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
 	icon_state = "gorelord-drew"
@@ -82,6 +88,8 @@
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
 	icon_state = "trace"
 	item_state = "trace"
+	attack_verb = list("wehs", "screeched", "shanked")
+	desc = "A stuffed toy resembling a very sad, very angry femboy."
 
 /obj/item/toy/plush/mammal/monika
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
@@ -99,6 +107,11 @@
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
 	icon_state = "edgar"
 	item_state = "edgar"
+
+/obj/item/toy/plush/mammal/kato
+	icon = 'modular_skyrat/icons/obj/plushies.dmi'
+	icon_state = "kato"
+	item_state = "kato"
 
 /obj/item/toy/plush/catgirl/kobe
 	icon = 'modular_skyrat/icons/obj/plushies.dmi'
@@ -118,3 +131,23 @@
 	desc = "An adorable stuffed toy resembling some sort of crew member."
 	icon_state = "dubious"
 	item_state = "dubious"
+
+/obj/item/toy/plush/borgplush/doctordrake
+	icon = 'modular_skyrat/icons/obj/plushes.dmi'
+	name = "Drake Plushie"
+	desc = "An adorable stuffed toy of a robot dragon."
+	icon_state = "doctordrake"
+	item_state = "doctordrake"
+
+/obj/item/toy/plush/borgplush/securitydrake
+	icon = 'modular_skyrat/icons/obj/plushes.dmi'
+	name = "Drake Plushie"
+	desc = "An adorable stuffed toy of a robot dragon."
+	icon_state = "securitydrake"
+	item_state = "securitydrake"
+
+/obj/item/toy/plush/mammal/sarmie
+	icon = 'modular_skyrat/icons/obj/plushies.dmi'
+	desc = "A stuffed toy who look like a cosplayer, <b>He looks sad.</b>"
+	icon_state = "sarmie"
+	item_state = "sarmie"

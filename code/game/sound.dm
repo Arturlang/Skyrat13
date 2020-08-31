@@ -14,7 +14,7 @@
 	var/sound/S = sound(get_sfx(soundin))
 	var/maxdistance = (world.view + extrarange)
 	var/z = turf_source.z
-	var/list/listeners = SSmobs.clients_by_zlevel[z]
+	var/list/listeners = SSmobs.clients_by_zlevel[z].Copy() //Skyrat change
 	if(!ignore_walls) //these sounds don't carry through walls
 		listeners = listeners & hearers(maxdistance,turf_source)
 	for(var/P in listeners)
@@ -130,6 +130,10 @@
 /proc/get_sfx(soundin)
 	if(istext(soundin))
 		switch(soundin)
+			if ("explosion_creaking") // Skyrat addition
+				soundin = pick('sound/effects/explosioncreak1.ogg', 'sound/effects/explosioncreak2.ogg')
+			if ("hull_creaking") // Skyrat addition
+				soundin = pick('sound/effects/creak1.ogg', 'sound/effects/creak2.ogg', 'sound/effects/creak3.ogg')
 			if ("shatter")
 				soundin = pick('sound/effects/glassbr1.ogg','sound/effects/glassbr2.ogg','sound/effects/glassbr3.ogg')
 			if ("explosion")

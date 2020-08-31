@@ -50,13 +50,18 @@
 	melee_damage_upper = 10
 	melee_damage_lower = 5
 
-	response_help  = "pets"
-	response_disarm = "gently moves aside"
-	response_harm   = "swats"
+	response_help_continuous = "pets"
+	response_help_simple = "pet"
+	response_disarm_continuous = "gently moves aside"
+	response_disarm_simple = "gently move aside"
+	response_harm_continuous = "swats"
+	response_harm_simple = "swat"
 	stop_automated_movement = 1
 	a_intent = INTENT_HARM //parrots now start "aggressive" since only player parrots will nuzzle.
-	attacktext = "chomps"
-	friendly = "grooms"
+	attack_verb_continuous = "chomps"
+	attack_verb_simple = "chomp"
+	friendly_verb_continuous = "grooms"
+	friendly_verb_simple = "groom"
 	mob_size = MOB_SIZE_SMALL
 	movement_type = FLYING
 	gold_core_spawnable = FRIENDLY_SPAWN
@@ -71,6 +76,7 @@
 	var/parrot_lastmove = null //Updates/Stores position of the parrot while it's moving
 	var/parrot_stuck = 0	//If parrot_lastmove hasnt changed, this will increment until it reaches parrot_stuck_threshold
 	var/parrot_stuck_threshold = 10 //if this == parrot_stuck, it'll force the parrot back to wandering
+	var/buckled_to_human = FALSE // Skyrat - if she's on someone's shoulder
 
 	var/list/speech_buffer = list()
 	var/speech_shuffle_rate = 20
@@ -145,6 +151,8 @@
 
 /mob/living/simple_animal/parrot/Hear(message, atom/movable/speaker, message_langs, raw_message, radio_freq, list/spans, message_mode, atom/movable/source)
 	. = ..()
+	if(check_command(message, speaker)) // Skyrat edit: Poly checks commands. Squawk. The code for this is in modularskyrat.
+		return
 	if(speaker != src && prob(50)) //Dont imitate ourselves
 		if(!radio_freq || prob(10))
 			if(speech_buffer.len >= 500)
@@ -352,9 +360,9 @@
 /*
  * AI - Not really intelligent, but I'm calling it AI anyway.
  */
-/mob/living/simple_animal/parrot/Life()
-	..()
-
+/mob/living/simple_animal/parrot/BiologicalLife(seconds, times_fired)
+	if(!(. = ..()))
+		return
 	//Sprite update for when a parrot gets pulled
 	if(pulledby && !stat && parrot_state != PARROT_WANDER)
 		if(buckled)
@@ -364,8 +372,6 @@
 		parrot_state = PARROT_WANDER
 		pixel_x = initial(pixel_x)
 		pixel_y = initial(pixel_y)
-		return
-
 
 //-----SPEECH
 	/* Parrot speech mimickry!
@@ -575,7 +581,12 @@
 					parrot_state = PARROT_WANDER
 				return
 
-			attacktext = pick("claws at", "chomps")
+			if(prob(50))
+				attack_verb_continuous = "claws at"
+				attack_verb_simple = "claw_at"
+			else
+				attack_verb_continuous = "chomps"
+				attack_verb_simple = "chomp"
 			L.attack_animal(src)//Time for the hurt to begin!
 		//Otherwise, fly towards the mob!
 		else
@@ -799,7 +810,7 @@
 
 /mob/living/simple_animal/parrot/Moved(oldLoc, dir)
 	. = ..()
-	if(. && !stat && client && parrot_state == PARROT_PERCH)
+	if(. && !stat && client && parrot_state == PARROT_PERCH && !buckled) //skyrat change - makes it so that the parrot won't switch to a living icon_state when perching and buckled ie no more flying parrot when perching on a person
 		parrot_state = PARROT_WANDER
 		icon_state = icon_living
 		pixel_x = initial(pixel_x)
@@ -841,6 +852,7 @@
 		pixel_x = pick(-8,8) //pick left or right shoulder
 		icon_state = icon_sit
 		parrot_state = PARROT_PERCH
+		buckled_to_human = TRUE // Skyrat edit
 		to_chat(src, "<span class='notice'>You sit on [H]'s shoulder.</span>")
 
 
@@ -901,11 +913,12 @@
 	if(. && !client && prob(1) && prob(1)) //Only the one true bird may speak across dimensions.
 		world.TgsTargetedChatBroadcast("A stray squawk is heard... \"[message]\"", FALSE)
 
-/mob/living/simple_animal/parrot/Poly/Life()
+/mob/living/simple_animal/parrot/Poly/BiologicalLife(seconds, times_fired)
+	if(!(. = ..()))
+		return
 	if(!stat && SSticker.current_state == GAME_STATE_FINISHED && !memory_saved)
 		Write_Memory(FALSE)
 		memory_saved = TRUE
-	..()
 
 /mob/living/simple_animal/parrot/Poly/death(gibbed)
 	if(!memory_saved)

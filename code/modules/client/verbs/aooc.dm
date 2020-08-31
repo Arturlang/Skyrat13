@@ -13,21 +13,38 @@ GLOBAL_VAR_INIT(normal_aooc_colour, "#ce254f")
 	if(!mob)
 		return
 
+	if(!(prefs.toggles & CHAT_OOC))
+		to_chat(src, "<span class='danger'> You have OOC muted.</span>")
+		return
+	if(jobban_isbanned(mob, "OOC"))
+		to_chat(src, "<span class='danger'>You have been banned from OOC.</span>")
+		return
+
 	if(!holder)
-		if(mob.stat == DEAD)
-			to_chat(usr, "<span class='danger'>You cannot use AOOC while dead.</span>")
-			return
-		if(!is_special_character(mob))
-			to_chat(usr, "<span class='danger'>You aren't an antagonist!</span>")
-		if(prefs.muted & MUTE_OOC)
-			to_chat(src, "<span class='danger'>You cannot use AOOC (muted).</span>")
-			return
-		if(jobban_isbanned(src.mob, "OOC"))
-			to_chat(src, "<span class='danger'>You are banned from OOC.</span>")
-			return
 		if(!GLOB.aooc_allowed)
 			to_chat(src, "<span class='danger'>AOOC is currently muted.</span>")
 			return
+		if(prefs.muted & MUTE_OOC)
+			to_chat(src, "<span class='danger'>You cannot use AOOC (muted).</span>")
+			return
+		if(!is_special_character(mob))
+			to_chat(usr, "<span class='danger'>You aren't an antagonist!</span>")
+		if(handle_spam_prevention(msg,MUTE_OOC))
+			return
+		if(findtext(msg, "byond://"))
+			to_chat(src, "<B>Advertising other servers is not allowed.</B>")
+			log_admin("[key_name(src)] has attempted to advertise in LOOC: [msg]")
+			return
+		if(mob.stat)
+			to_chat(usr, "<span class='danger'>You cannot use AOOC while unconscious or dead.</span>")
+			return
+		if(isdead(mob))
+			to_chat(src, "<span class='danger'>You cannot use AOOC while ghosting.</span>")
+			return
+		if(HAS_TRAIT(mob, TRAIT_AOOC_MUTE))
+			to_chat(src, "<span class='danger'>You cannot use AOOC right now.</span>")
+			return
+
 	if(QDELETED(src))
 		return
 
@@ -55,6 +72,12 @@ GLOBAL_VAR_INIT(normal_aooc_colour, "#ce254f")
 		if(prefs.toggles & MEMBER_PUBLIC)
 			keyname = "<font color='[prefs.aooccolor ? prefs.aooccolor : GLOB.normal_aooc_colour]'>[icon2html('icons/member_content.dmi', world, "blag")][keyname]</font>"
 	//The linkify span classes and linkify=TRUE below make ooc text get clickable chat href links if you pass in something resembling a url
+
+	// Skyrat edit: antag anonimity
+	if(!check_rights_for(src, R_ADMIN) || holder.deadmined) // No anonimity for admins unless deadmined
+		if(!aooc_name)
+			aooc_name = "Operator [pick(GLOB.phonetic_alphabet)] [rand(1, 99)]"
+		keyname = aooc_name
 
 	var/antaglisting = list()
 

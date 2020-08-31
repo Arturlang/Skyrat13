@@ -100,6 +100,12 @@
 	cost = 1
 	exclude_modes = list(/datum/game_mode/nuclear, /datum/game_mode/nuclear/clown_ops)
 
+/datum/uplink_item/device_tools/ammo_pouch
+	name = "Ammo Pouch"
+	desc = "A small yet large enough pouch that can fit in your pocket, and has room for three magazines."
+	item = /obj/item/storage/bag/ammo
+	cost = 1
+
 /datum/uplink_item/device_tools/fakenucleardisk
 	name = "Decoy Nuclear Authentication Disk"
 	desc = "It's just a normal disk. Visually it's identical to the real deal, but it won't hold up under closer scrutiny by the Captain. \
@@ -171,13 +177,13 @@
 	item = /obj/item/sbeacondrop
 	cost = 14
 
-/datum/uplink_item/device_tools/powersink
+/*/datum/uplink_item/device_tools/powersink
 	name = "Power Sink"
 	desc = "When screwed to wiring attached to a power grid and activated, this large device lights up and places excessive \
 			load on the grid, causing a station-wide blackout. The sink is large and cannot be stored in most \
 			traditional bags and boxes. Caution: Will explode if the powernet contains sufficient amounts of energy."
 	item = /obj/item/powersink
-	cost = 6
+	cost = 6 */
 
 /datum/uplink_item/device_tools/rad_laser
 	name = "Radioactive Microlaser"
@@ -200,10 +206,9 @@
 
 /datum/uplink_item/device_tools/stimpack
 	name = "Stimpack"
-	desc = "Stimpacks, the tool of many great heroes, make you nearly immune to stuns and knockdowns for about \
-			5 minutes after fully injecting yourself. Can inject yourself, or others, 5 times and through hardsuits. \
-			Each injection will gives around a minute of stimulants."
-	item = /obj/item/reagent_containers/hypospray/medipen/stimulants
+	desc = "Stimpacks, the tool of many great heroes. Makes you nearly immune to non-lethal weaponry for about \
+			5 minutes after injection."
+	item = /obj/item/reagent_containers/syringe/stimulants
 	cost = 5
 	surplus = 90
 
@@ -225,17 +230,9 @@
 
 /datum/uplink_item/device_tools/surgerybag_adv
 	name = "Advanced Syndicate Surgery Duffel Bag"
-	desc = "The Syndicate surgery duffel bag is a toolkit containing all advanced surgery tools, surgical drapes, \
-			a Syndicate brand MMI, a straitjacket, a muzzle, and an outdated, yet still useful Combat Medic Kit."
+	desc = "A Syndicate surgery duffel bag, with a set of upgraded surgery tools to boot."
 	item = /obj/item/storage/backpack/duffelbag/syndie/surgery_adv
-	cost = 10
-
-/datum/uplink_item/device_tools/brainwash_disk
-	name = "Brainwashing Surgery Program"
-	desc = "A disk containing the procedure to perform a brainwashing surgery, allowing you to implant an objective onto a target. \
-	Insert into an Operating Console to enable the procedure."
-	item = /obj/item/disk/surgery/brainwashing
-	cost = 3
+	cost = 6
 
 /datum/uplink_item/device_tools/encryptionkey
 	name = "Syndicate Encryption Key"
@@ -272,3 +269,15 @@
 	cost = 2
 	include_modes = list(/datum/game_mode/nuclear, /datum/game_mode/nuclear/clown_ops)
 	restricted = TRUE
+
+/* for now
+/datum/uplink_item/device_tools/suspiciousphone
+	name = "Protocol CRAB-17 Phone"
+	desc = "The Protocol CRAB-17 Phone, a phone borrowed from an unknown third party, it can be used to crash the space market, funneling the losses of the crew to your bank account.\
+	The crew can move their funds to a new banking site though, unless they HODL, in which case they deserve it."
+	item = /obj/item/suspiciousphone
+	cost = 7
+	restricted = TRUE
+	limited_stock = 1
+*/
+

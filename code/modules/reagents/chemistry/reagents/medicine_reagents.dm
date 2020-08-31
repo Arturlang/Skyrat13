@@ -72,6 +72,12 @@
 		if(D.severity == DISEASE_SEVERITY_POSITIVE)
 			continue
 		D.cure()
+	//skyrat edit
+	for(var/i in M.all_scars)
+		var/datum/scar/S = i
+		if(istype(S) && !S.permanent)
+			qdel(i)
+	//
 	..()
 	. = 1
 
@@ -144,6 +150,12 @@
 		M.adjustFireLoss(-power, 0)
 		M.adjustToxLoss(-power, 0, TRUE) //heals TOXINLOVERs
 		M.adjustCloneLoss(-power, 0)
+		//skyrat edit
+		for(var/i in M.all_wounds)
+			var/datum/wound/W = i
+			if(istype(W))
+				W.on_xadone(power)
+		//
 		REMOVE_TRAIT(M, TRAIT_DISFIGURED, TRAIT_GENERIC) //fixes common causes for disfiguration
 		. = 1
 	metabolization_rate = REAGENTS_METABOLISM * (0.00001 * (M.bodytemperature ** 2) + 0.5)
@@ -192,6 +204,12 @@
 		M.adjustFireLoss(-1.5 * power, 0)
 		M.adjustToxLoss(-power, 0, TRUE)
 		M.adjustCloneLoss(-power, 0)
+		//skyrat edit
+		for(var/i in M.all_wounds)
+			var/datum/wound/W = i
+			if(istype(W))
+				W.on_xadone(power)
+		//
 		REMOVE_TRAIT(M, TRAIT_DISFIGURED, TRAIT_GENERIC)
 		. = 1
 	..()
@@ -231,7 +249,7 @@
 
 /datum/reagent/medicine/spaceacillin
 	name = "Spaceacillin"
-	description = "Spaceacillin will prevent a patient from conventionally spreading any diseases they are currently infected with."
+	description = "Spaceacillin will prevent a patient from conventionally spreading any diseases they are currently infected with. Also reduces infection in serious burns." //skyrat edit
 	color = "#f2f2f2"
 	metabolization_rate = 0.1 * REAGENTS_METABOLISM
 	pH = 8.1
@@ -246,6 +264,13 @@
 	metabolization_rate = 5 * REAGENTS_METABOLISM
 	overdose_threshold = 50
 
+/datum/reagent/medicine/silver_sulfadiazine/reaction_obj(obj/O, reac_volume)
+	if(istype(O, /obj/item/stack/medical/gauze))
+		var/obj/item/stack/medical/gauze/G = O
+		reac_volume = min((reac_volume / 10), G.amount)
+		new/obj/item/stack/medical/mesh(get_turf(G), reac_volume)
+		G.use(reac_volume)
+
 /datum/reagent/medicine/silver_sulfadiazine/reaction_mob(mob/living/M, method=TOUCH, reac_volume, show_message = 1)
 	if(iscarbon(M) && M.stat != DEAD)
 		if(method in list(INGEST, VAPOR, INJECT))
@@ -254,6 +279,12 @@
 				to_chat(M, "<span class='warning'>You don't feel so good...</span>")
 		else if(M.getFireLoss())
 			M.adjustFireLoss(-reac_volume)
+			//skyrat edit
+			if(iscarbon(M))
+				var/mob/living/carbon/carbies = M
+				for(var/datum/wound/burn/burn_wound in carbies.all_wounds)
+					burn_wound.regenerate_flesh(reac_volume)
+			//
 			if(show_message)
 				to_chat(M, "<span class='danger'>You feel your burns healing! It stings like hell!</span>")
 			M.emote("scream")
@@ -267,7 +298,11 @@
 
 /datum/reagent/medicine/silver_sulfadiazine/overdose_start(mob/living/M)
 	metabolization_rate = 15 * REAGENTS_METABOLISM
-	M.adjustBruteLoss(2*REM, 0)
+	..()
+	. = 1
+
+/datum/reagent/medicine/silver_sulfadiazine/overdose_process(mob/living/M)
+	M.adjustFireLoss(2*REM, 0)
 	var/obj/item/organ/liver/L = M.getorganslot(ORGAN_SLOT_LIVER)
 	if(L)
 		L.applyOrganDamage(1)
@@ -321,14 +356,24 @@
 			SEND_SIGNAL(M, COMSIG_ADD_MOOD_EVENT, "painful_medicine", /datum/mood_event/painful_medicine)
 	..()
 
+/datum/reagent/medicine/styptic_powder/reaction_obj(obj/O, reac_volume)
+	if(istype(O, /obj/item/stack/medical/gauze))
+		var/obj/item/stack/medical/gauze/G = O
+		reac_volume = min((reac_volume / 10), G.amount)
+		new/obj/item/stack/medical/suture(get_turf(G), reac_volume)
+		G.use(reac_volume)
 
 /datum/reagent/medicine/styptic_powder/on_mob_life(mob/living/carbon/M)
 	M.adjustBruteLoss(-2*REM, 0)
 	..()
 	. = 1
 
-datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
+/datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 	metabolization_rate = 15 * REAGENTS_METABOLISM
+	..()
+	. = 1
+
+/datum/reagent/medicine/styptic_powder/overdose_process(mob/living/M)
 	M.adjustBruteLoss(2*REM, 0)
 	var/obj/item/organ/liver/L = M.getorganslot(ORGAN_SLOT_LIVER)
 	if(L)
@@ -347,6 +392,7 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 	var/last_added = 0
 	var/maximum_reachable = BLOOD_VOLUME_NORMAL - 10	//So that normal blood regeneration can continue with salglu active
 	pH = 5.5
+	var/extra_regen = 0.25 // in addition to acting as temporary blood, also add this much to their actual blood per tick
 
 /datum/reagent/medicine/salglu_solution/on_mob_life(mob/living/carbon/M)
 	if((HAS_TRAIT(M, TRAIT_NOMARROW)))
@@ -359,6 +405,7 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 		var/new_blood_level = min(M.blood_volume + amount_to_add, maximum_reachable)
 		last_added = new_blood_level - M.blood_volume
 		M.blood_volume = new_blood_level
+		M.blood_volume = new_blood_level + extra_regen
 	if(prob(33))
 		M.adjustBruteLoss(-0.5*REM, 0)
 		M.adjustFireLoss(-0.5*REM, 0)
@@ -382,7 +429,7 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 
 /datum/reagent/medicine/mine_salve
 	name = "Miner's Salve"
-	description = "A powerful painkiller. Restores bruising and burns in addition to making the patient believe they are fully healed."
+	description = "A powerful painkiller. Restores bruising and burns in addition to making the patient believe they are fully healed. Also great for treating severe burn wounds in a pinch." //skyrat edit
 	reagent_state = LIQUID
 	color = "#6D6374"
 	metabolization_rate = 0.4 * REAGENTS_METABOLISM
@@ -400,7 +447,7 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 /datum/reagent/medicine/mine_salve/reaction_mob(mob/living/M, method=TOUCH, reac_volume, show_message = 1)
 	if(iscarbon(M) && M.stat != DEAD)
 		if(method in list(INGEST, VAPOR, INJECT))
-			M.nutrition -= 5
+			M.adjust_nutrition(-5)
 			if(show_message)
 				to_chat(M, "<span class='warning'>Your stomach feels empty and cramps!</span>")
 		else
@@ -411,13 +458,14 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 				// +10% success propability on each step, useful while operating in less-than-perfect conditions
 
 			if(show_message)
-				to_chat(M, "<span class='danger'>You feel your wounds fade away to nothing!</span>" )
+				to_chat(M, "<span class='danger'>You feel your injuries fade away to nothing!</span>" ) //skyrat edit
 	..()
-
+			
 /datum/reagent/medicine/mine_salve/on_mob_end_metabolize(mob/living/M)
 	if(iscarbon(M))
 		var/mob/living/carbon/N = M
 		N.hal_screwyhud = SCREWYHUD_NONE
+		REMOVE_TRAIT(M, TRAIT_PAINKILLER, PAINKILLER_MINERSSALVE) //SKYRAT EDIT, Painkiller.
 	..()
 
 /datum/reagent/medicine/synthflesh
@@ -718,10 +766,12 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 
 /datum/reagent/medicine/morphine/on_mob_metabolize(mob/living/L)
 	..()
+	ADD_TRAIT(L, TRAIT_PAINKILLER, PAINKILLER_MORPHINE) //SKYRAT EDIT, Painkiller.
 	L.add_movespeed_mod_immunities(type, list(/datum/movespeed_modifier/damage_slowdown, /datum/movespeed_modifier/damage_slowdown_flying, /datum/movespeed_modifier/monkey_health_speedmod))
 
 /datum/reagent/medicine/morphine/on_mob_end_metabolize(mob/living/L)
 	L.remove_movespeed_mod_immunities(type, list(/datum/movespeed_modifier/damage_slowdown, /datum/movespeed_modifier/damage_slowdown_flying, /datum/movespeed_modifier/monkey_health_speedmod))
+	REMOVE_TRAIT(L, TRAIT_PAINKILLER, PAINKILLER_MORPHINE) //SKYRAT EDIT, Painkiller.
 	..()
 
 /datum/reagent/medicine/morphine/on_mob_life(mob/living/carbon/M)
@@ -1208,15 +1258,15 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 	value = REAGENT_VALUE_VERY_RARE
 
 /datum/reagent/medicine/lesser_syndicate_nanites/on_mob_life(mob/living/carbon/M)
-	M.adjustBruteLoss(-3*REM, FALSE) // hidden gold shh
-	M.adjustFireLoss(-3*REM, FALSE)
-	M.adjustOxyLoss(-15, FALSE)
-	M.adjustToxLoss(-3*REM, FALSE)
-	M.adjustOrganLoss(ORGAN_SLOT_BRAIN, -15*REM)
-	M.adjustCloneLoss(-3*REM, FALSE)
-	M.adjustStaminaLoss(-20*REM,FALSE)
+	M.adjustBruteLoss(-2*REM, FALSE)
+	M.adjustFireLoss(-2*REM, FALSE)
+	M.adjustOxyLoss(-5*REM, FALSE)
+	M.adjustToxLoss(-2*REM, FALSE)
+	M.adjustOrganLoss(ORGAN_SLOT_BRAIN, -5*REM)
+	M.adjustCloneLoss(-1.25*REM, FALSE)
+	M.adjustStaminaLoss(-4*REM,FALSE)
 	if(M.blood_volume < (BLOOD_VOLUME_NORMAL*M.blood_ratio))
-		M.blood_volume += 20 // blood fall out man bad
+		M.blood_volume += 3
 	..()
 	. = 1
 
@@ -1526,10 +1576,15 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 /datum/reagent/medicine/polypyr/on_mob_life(mob/living/carbon/M) //I wanted a collection of small positive effects, this is as hard to obtain as coniine after all.
 	M.adjustOrganLoss(ORGAN_SLOT_LUNGS, -0.25)
 	M.adjustBruteLoss(-0.35, 0)
+	//skyrat edit
 	if(prob(50))
 		if(ishuman(M))
 			var/mob/living/carbon/human/H = M
-			H.bleed_rate = max(H.bleed_rate - 1, 0)
+			for(var/x in H.bodyparts)
+				var/obj/item/bodypart/BP = x
+				if(istype(BP))
+					BP.generic_bleedstacks += 5
+	//
 	..()
 	. = 1
 
@@ -1545,3 +1600,79 @@ datum/reagent/medicine/styptic_powder/overdose_start(mob/living/M)
 	M.adjustOrganLoss(ORGAN_SLOT_LUNGS, 0.5)
 	..()
 	. = 1
+
+//skyrat edit
+// handled in cut wounds process
+
+// helps bleeding wounds clot faster
+/datum/reagent/medicine/coagulant
+	name = "Sanguirite"
+	description = "A proprietary coagulant used to help bleeding wounds clot faster."
+	reagent_state = LIQUID
+	color = "#bb2424"
+	metabolization_rate = 0.25 * REAGENTS_METABOLISM
+	overdose_threshold = 20
+	/// How much base clotting we do per bleeding wound, multiplied by the below number for each bleeding wound
+	var/clot_rate = 0.25
+	/// If we have multiple bleeding wounds, we count the number of bleeding wounds, then multiply the clot rate by this^(n) before applying it to each cut, so more cuts = less clotting per cut (though still more total clotting)
+	var/clot_coeff_per_wound = 0.75
+
+/datum/reagent/medicine/coagulant/on_mob_life(mob/living/carbon/M)
+	. = ..()
+	if(!M.blood_volume || !M.all_wounds)
+		return
+
+	var/effective_clot_rate = clot_rate
+
+	for(var/i in M.all_wounds)
+		var/datum/wound/W = i
+		if(W.blood_flow)
+			effective_clot_rate *= clot_coeff_per_wound
+
+	for(var/i in M.all_wounds)
+		var/datum/wound/W = i
+		W.blood_flow = max(0, W.blood_flow - effective_clot_rate)
+
+/datum/reagent/medicine/coagulant/overdose_process(mob/living/M)
+	. = ..()
+	if(!M.blood_volume)
+		return
+
+	if(prob(15))
+		M.losebreath += rand(2,4)
+		M.adjustOxyLoss(rand(1,3))
+		if(prob(30))
+			to_chat(M, "<span class='danger'>You can feel your blood clotting up in your veins!</span>")
+		else if(prob(10))
+			to_chat(M, "<span class='userdanger'>You feel like your blood has stopped moving!</span>")
+			M.adjustOxyLoss(rand(3,4))
+
+		if(prob(50))
+			var/obj/item/organ/lungs/our_lungs = M.getorganslot(ORGAN_SLOT_LUNGS)
+			our_lungs.applyOrganDamage(1)
+		else
+			var/obj/item/organ/heart/our_heart = M.getorganslot(ORGAN_SLOT_HEART)
+			our_heart.applyOrganDamage(1)
+
+// can be synthesized on station rather than bought. made by grinding a banana peel, heating it up, then mixing the banana peel powder with salglu
+/datum/reagent/medicine/coagulant/weak
+	name = "Synthi-Sanguirite"
+	description = "A synthetic coagulant used to help bleeding wounds clot faster. Not quite as effective as name brand Sanguirite, especially on patients with lots of cuts."
+	clot_coeff_per_wound = 0.8
+
+/datum/reagent/medicine/liquid_wisdom
+	name = "liquid wisdom"
+	description = "the physical representation of wisdom, in liquid form"
+	taste_mult = 4
+	can_synth = FALSE
+	overdose_threshold = 30
+	value = REAGENT_VALUE_UNCOMMON // while it's 'rare', it can be milked from the wisdom cow
+
+/datum/reagent/medicine/liquid_wisdom/on_mob_life(mob/living/carbon/C) //slightly stronger mannitol, from the wisdom cow
+	C.adjustOrganLoss(ORGAN_SLOT_BRAIN, -3*REM)
+	if(prob(20))
+		C.cure_trauma_type(resilience = TRAUMA_RESILIENCE_BASIC)
+	if(prob(3))
+		to_chat(C, "[pick(GLOB.wisdoms)]") //give them a random wisdom
+	..()
+

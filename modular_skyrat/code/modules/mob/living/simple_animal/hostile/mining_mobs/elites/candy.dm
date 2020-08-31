@@ -27,7 +27,8 @@
 	health = 800
 	melee_damage_lower = 30
 	melee_damage_upper = 30
-	attacktext = "punches"
+	attack_verb_continuous = "punches"
+	attack_verb_simple = "punch"
 	attack_sound = 'sound/magic/demon_consume.ogg'
 	speed = 1
 	move_to_delay = 3
@@ -41,6 +42,10 @@
 								/datum/action/innate/elite_attack/bloody_trap,
 								/datum/action/innate/elite_attack/meat_shield,
 								/datum/action/innate/elite_attack/knockdown)
+	glorymessageshand = list("tries punching Candy's head, but they parry it and grab their hand! However, another hard punch comes through with the other arm, this time killing the demon swiftly and exploding their skull!", "grabs Candy by their neck, then pressures into until it explodes and it's head comes flying off!")
+	glorymessagescrusher = list("slashes Candy in half vertically with their crusher, each of the parts falling off onto the ground limply!")
+	glorymessagespka = list("shoots at Candy's head, breaking their skull open and revealing their brain! Then, they bash the brain into mush with their PKA's stock!", "kicks Candy into the ground, and repeatedly slams their PKA against their skull until they finally die!")
+	glorymessagespkabayonet = list("stabs through Candy's maw and lifts them into the air, shooting their PKA and exploding their head as the limp body falls off!")
 
 /datum/action/innate/elite_attack/bloodcharge
 	name = "Blood Charge"
@@ -257,7 +262,6 @@
 	return FALSE
 
 //loot
-
 /obj/item/bloodcrawlbottle
 	name = "bloodlust in a bottle"
 	desc = "Drinking this will give you unimaginable powers... and mildly disgust you because of it's metallic taste."
@@ -266,7 +270,35 @@
 
 /obj/item/bloodcrawlbottle/attack_self(mob/user)
 	to_chat(user, "<span class='notice'>You drink the bottle's contents.</span>")
-	var/obj/effect/proc_holder/spell/bloodcrawl/S = new /obj/effect/proc_holder/spell/bloodcrawl/
+	var/obj/effect/proc_holder/spell/bloodcrawl/S = new()
 	user.mind.AddSpell(S)
 	user.log_message("learned the spell bloodcrawl ([S])", LOG_ATTACK, color="orange")
 	qdel(src)
+
+/obj/effect/proc_holder/spell/bloodcrawl/lesser
+	name = "Lesser Blood Crawl"
+	desc = "Use pools of blood to phase out of existence. Requires large pools of blood, and drains 5% of your blood."
+
+/obj/effect/proc_holder/spell/bloodcrawl/lesser/choose_targets(mob/user = usr)
+	for(var/obj/effect/decal/cleanable/target in range(range, get_turf(user)))
+		if(target.can_bloodcrawl_in() && target.bloodiness >= 20)
+			perform(target)
+			return
+	revert_cast()
+	to_chat(user, "<span class='warning'>There must be a nearby source of plentiful blood!</span>")
+
+/obj/effect/proc_holder/spell/bloodcrawl/lesser/perform(obj/effect/decal/cleanable/target, recharge = 1, mob/living/user = usr)
+	if(istype(user) && user.canUseTopic(user, TRUE))
+		if(phased)
+			if(user.phasein(target))
+				phased = 0
+		else
+			if(user.phaseout(target))
+				phased = 1
+		if(iscarbon(user))
+			var/mob/living/carbon/C = user
+			C.AdjustBloodVol(initial(C.blood_volume)/20)
+		start_recharge()
+		return
+	revert_cast()
+	to_chat(user, "<span class='warning'>You are unable to blood crawl!</span>")

@@ -32,7 +32,7 @@
 	for (var/x in 1 to PILL_STYLE_COUNT)
 		var/list/SL = list()
 		SL["id"] = x
-		SL["htmltag"] = assets.icon_tag("pill[x]")
+		SL["className"] = assets.icon_class_name("pill[x]")
 		pillStyles += list(SL)
 
 	. = ..()
@@ -258,9 +258,9 @@
 			var/amount = text2num(params["amount"])
 			if(amount == null)
 				amount = text2num(input(usr,
-					"Max 10. Buffer content will be split evenly.",
+					"Max 20. Buffer content will be split evenly.",
 					"How many to make?", 1))
-			amount = clamp(round(amount), 0, 10) // Skyrat edit -- 512 compatibility
+			amount = clamp(round(amount), 0, 20)
 			if (amount <= 0)
 				return FALSE
 			// Get units per item
@@ -281,6 +281,9 @@
 				vol_each_max = min(60, vol_each_max)
 			else if (item_type == "smartDart")
 				vol_each_max = min(20, vol_each_max)
+			// SKYRAT EDIT: Medipens/injectors
+			else if (item_type == "injector")
+				vol_each_max = min(10, vol_each_max)
 			else
 				return FALSE
 			if(vol_each_text == "auto")
@@ -383,10 +386,25 @@
 					P.mode=!mode
 					P.update_icon()
 				return TRUE
+			// SKYRAT EDIT: Medipens/injectors
+			if(item_type == "injector")
+				for(var/datum/reagent/M in reagents.reagent_list)
+					if(!istype(M, /datum/reagent/medicine))
+						to_chat(usr, "<span class = 'warning'>Non-medicinal reagent detected. Halting operation.</span>")
+						return FALSE
+				var/obj/item/reagent_containers/hypospray/medipen/empty/P
+				for(var/i = 0; i < amount; i++)
+					P = new /obj/item/reagent_containers/hypospray/medipen/empty(drop_location())
+					P.name = trim("[name] medipen")
+					P.desc = "A medipen that contains [vol_each] of [name]."
+					adjust_item_drop_location(P)
+					reagents.trans_to(P, vol_each)
+				return TRUE
 			return FALSE
 
 		if("analyze")
-			var/datum/reagent/R = GLOB.name2reagent[params["id"]]
+			var/reagent = GLOB.name2reagent[params["id"]]
+			var/datum/reagent/R = GLOB.chemical_reagents_list[reagent]
 			if(R)
 				var/state = "Unknown"
 				if(initial(R.reagent_state) == 1)
@@ -399,13 +417,9 @@
 				var/T = initial(R.metabolization_rate) * (60 / P)
 				if(istype(R, /datum/reagent/fermi))
 					fermianalyze = TRUE
-					var/datum/chemical_reaction/Rcr = get_chemical_reaction(R)
+					var/datum/chemical_reaction/Rcr = get_chemical_reaction(reagent)
 					var/pHpeakCache = (Rcr.OptimalpHMin + Rcr.OptimalpHMax)/2
-					var/datum/reagent/targetReagent = reagents.has_reagent(R)
-
-					if(!targetReagent)
-						CRASH("Tried to find a reagent that doesn't exist in the chem_master!")
-					analyzeVars = list("name" = initial(R.name), "state" = state, "color" = initial(R.color), "description" = initial(R.description), "metaRate" = T, "overD" = initial(R.overdose_threshold), "addicD" = initial(R.addiction_threshold), "purityF" = targetReagent.purity, "inverseRatioF" = initial(R.inverse_chem_val), "purityE" = initial(Rcr.PurityMin), "minTemp" = initial(Rcr.OptimalTempMin), "maxTemp" = initial(Rcr.OptimalTempMax), "eTemp" = initial(Rcr.ExplodeTemp), "pHpeak" = pHpeakCache)
+					analyzeVars = list("name" = initial(R.name), "state" = state, "color" = initial(R.color), "description" = initial(R.description), "metaRate" = T, "overD" = initial(R.overdose_threshold), "addicD" = initial(R.addiction_threshold), "purityF" = R.purity, "inverseRatioF" = initial(R.inverse_chem_val), "purityE" = initial(Rcr.PurityMin), "minTemp" = initial(Rcr.OptimalTempMin), "maxTemp" = initial(Rcr.OptimalTempMax), "eTemp" = initial(Rcr.ExplodeTemp), "pHpeak" = pHpeakCache)
 				else
 					fermianalyze = FALSE
 					analyzeVars = list("name" = initial(R.name), "state" = state, "color" = initial(R.color), "description" = initial(R.description), "metaRate" = T, "overD" = initial(R.overdose_threshold), "addicD" = initial(R.addiction_threshold))

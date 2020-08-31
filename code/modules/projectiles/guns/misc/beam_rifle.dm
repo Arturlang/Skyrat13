@@ -29,6 +29,8 @@
 	ammo_type = list(/obj/item/ammo_casing/energy/beam_rifle/hitscan)
 	cell_type = /obj/item/stock_parts/cell/beam_rifle
 	canMouseDown = TRUE
+	can_turret = FALSE
+	can_circuit = FALSE
 	//Cit changes: beam rifle stats.
 	slowdown = 1
 	item_flags = NO_MAT_REDEMPTION | SLOWS_WHILE_IN_HAND | NEEDS_PERMIT
@@ -77,7 +79,6 @@
 	var/static/image/drained_overlay = image(icon = 'icons/obj/guns/energy.dmi', icon_state = "esniper_empty")
 
 	var/datum/action/item_action/zoom_lock_action/zoom_lock_action
-	var/mob/listeningTo
 
 /obj/item/gun/energy/beam_rifle/debug
 	delay = 0
@@ -178,7 +179,6 @@
 	STOP_PROCESSING(SSfastprocess, src)
 	set_user(null)
 	QDEL_LIST(current_tracers)
-	listeningTo = null
 	return ..()
 
 /obj/item/gun/energy/beam_rifle/proc/aiming_beam(force_update = FALSE)
@@ -199,7 +199,7 @@
 	else
 		P.color = rgb(0, 255, 0)
 	var/turf/curloc = get_turf(src)
-	var/turf/targloc = get_turf(current_user.client.mouseObject)
+	var/turf/targloc = current_user.client.mouseLocation //Skyrat change
 	if(!istype(targloc))
 		if(!istype(curloc))
 			return
@@ -260,17 +260,12 @@
 	if(user == current_user)
 		return
 	stop_aiming(current_user)
-	if(listeningTo)
-		UnregisterSignal(listeningTo, COMSIG_MOVABLE_MOVED)
-		listeningTo = null
-	if(istype(current_user))
-		LAZYREMOVE(current_user.mousemove_intercept_objects, src)
+	if(current_user)
+		UnregisterSignal(current_user, COMSIG_MOVABLE_MOVED)
 		current_user = null
 	if(istype(user))
 		current_user = user
-		LAZYOR(current_user.mousemove_intercept_objects, src)
 		RegisterSignal(user, COMSIG_MOVABLE_MOVED, .proc/on_mob_move)
-		listeningTo = user
 
 /obj/item/gun/energy/beam_rifle/onMouseDrag(src_object, over_object, src_location, over_location, params, mob)
 	if(aiming)
@@ -295,9 +290,9 @@
 	if(istype(object, /obj/screen) && !istype(object, /obj/screen/click_catcher))
 		return
 	process_aim()
-	if(fire_check())
+	if(fire_check() && can_trigger_gun(M))
 		sync_ammo()
-		do_fire(M.client.mouseObject, M, FALSE, M.client.mouseParams, M.zone_selected)
+		do_fire(M.client.mouseLocation, M, FALSE, M.client.mouseParams, M.zone_selected) //Skyrat change
 	stop_aiming()
 	QDEL_LIST(current_tracers)
 	return ..()
@@ -425,10 +420,10 @@
 	var/wall_devastate = 0
 	var/aoe_structure_range = 0
 	var/aoe_structure_damage = 0
-	var/aoe_fire_range = 0
-	var/aoe_fire_chance = 0
-	var/aoe_mob_range = 0
-	var/aoe_mob_damage = 0
+	var/aoe_fire_range = 2
+	var/aoe_fire_chance = 100
+	var/aoe_mob_range = 2
+	var/aoe_mob_damage = 30
 	var/impact_structure_damage = 0
 	var/impact_direct_damage = 0
 	var/turf/cached

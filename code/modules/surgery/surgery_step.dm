@@ -18,7 +18,7 @@
 		if(iscyborg(user))
 			success = TRUE
 	if(accept_any_item)
-		if(tool && tool_check(user, tool))
+		if(tool && tool_check(user, tool, target))
 			success = TRUE
 	else if(tool)
 		for(var/key in implements)
@@ -29,7 +29,7 @@
 				match = TRUE
 			if(match)
 				implement_type = key
-				if(tool_check(user, tool))
+				if(tool_check(user, tool, target))
 					success = TRUE
 					break
 	if(success)
@@ -57,15 +57,22 @@
 		surgery.step_in_progress = FALSE
 		return FALSE
 	if(tool)
-		speed_mod = tool.toolspeed
-	if(do_after(user, time * speed_mod, target = target))
+		speed_mod = tool.toolspeed //faster tools mean faster surgeries, but also less experience.
+	if(user.mind)
+		speed_mod = user.mind.action_skill_mod(/datum/skill/numerical/surgery, speed_mod, THRESHOLD_UNTRAINED, FALSE)
+	var/delay = time * speed_mod
+	if(do_after(user, delay, target = target))
 		var/prob_chance = 100
 		if(implement_type)	//this means it isn't a require hand or any item step.
 			prob_chance = implements[implement_type]
-		prob_chance *= surgery.get_propability_multiplier()
+		prob_chance *= surgery.get_probability_multiplier()
 
 		if((prob(prob_chance) || (iscyborg(user) && !silicons_obey_prob)) && chem_check(target) && !try_to_fail)
 			if(success(user, target, target_zone, tool, surgery))
+				var/multi = (delay/SKILL_GAIN_DELAY_DIVISOR)
+				if(repeatable)
+					multi *= 0.5 //Spammable surgeries award less experience.
+				user.mind?.auto_gain_experience(/datum/skill/numerical/surgery, SKILL_GAIN_SURGERY_PER_STEP * multi)
 				advance = TRUE
 		else
 			if(failure(user, target, target_zone, tool, surgery))
@@ -94,7 +101,7 @@
 		"[user] finishes.", TRUE) //By default the patient will notice if the wrong thing has been cut
 	return FALSE
 
-/datum/surgery_step/proc/tool_check(mob/user, obj/item/tool)
+/datum/surgery_step/proc/tool_check(mob/user, obj/item/tool, mob/living/carbon/target)
 	return TRUE
 
 /datum/surgery_step/proc/chem_check(mob/living/target)
@@ -110,6 +117,7 @@
 		for(var/R in chems_needed)
 			if(target.reagents.has_reagent(R))
 				return TRUE
+
 /datum/surgery_step/proc/get_chem_list()
 	if(!LAZYLEN(chems_needed))
 		return

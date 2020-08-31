@@ -61,12 +61,20 @@
 	} while (0)
 #define HAS_TRAIT(target, trait) (target.status_traits ? (target.status_traits[trait] ? TRUE : FALSE) : FALSE)
 #define HAS_TRAIT_FROM(target, trait, source) (target.status_traits ? (target.status_traits[trait] ? (source in target.status_traits[trait]) : FALSE) : FALSE)
+#define HAS_TRAIT_FROM_ONLY(target, trait, source) (\
+	target.status_traits ?\
+		(target.status_traits[trait] ?\
+			((source in target.status_traits[trait]) && (length(target.status_traits) == 1))\
+			: FALSE)\
+		: FALSE)
 #define HAS_TRAIT_NOT_FROM(target, trait, source) (target.status_traits ? (target.status_traits[trait] ? (length(target.status_traits[trait] - source) > 0) : FALSE) : FALSE)
 
 //mob traits
 #define TRAIT_BLIND 			"blind"
 #define TRAIT_MUTE				"mute"
 #define TRAIT_EMOTEMUTE			"emotemute"
+#define TRAIT_LOOC_MUTE			"looc_mute" //Just like unconsciousness, it disables LOOC salt.
+#define TRAIT_AOOC_MUTE			"aooc_mute" //Same as above but for AOOC.
 #define TRAIT_DEAF				"deaf"
 #define TRAIT_NEARSIGHT			"nearsighted"
 #define TRAIT_FAT				"fat"
@@ -78,6 +86,7 @@
 #define TRAIT_MONKEYLIKE		"monkeylike" //sets IsAdvancedToolUser to FALSE
 #define TRAIT_PACIFISM			"pacifism"
 #define TRAIT_IGNORESLOWDOWN	"ignoreslow"
+#define TRAIT_IGNOREDAMAGESLOWDOWN "ignoredamageslowdown"
 #define TRAIT_DEATHCOMA			"deathcoma" //Causes death-like unconsciousness
 #define TRAIT_FAKEDEATH			"fakedeath" //Makes the owner appear as dead to most forms of medical examination
 #define TRAIT_DISFIGURED		"disfigured"
@@ -87,6 +96,7 @@
 #define TRAIT_SLEEPIMMUNE		"sleep_immunity"
 #define TRAIT_PUSHIMMUNE		"push_immunity"
 #define TRAIT_SHOCKIMMUNE		"shock_immunity"
+#define TRAIT_TESLA_SHOCKIMMUNE	"tesla_shock_immunity"
 #define TRAIT_STABLEHEART		"stable_heart"
 #define TRAIT_STABLELIVER		"stable_liver"
 #define TRAIT_RESISTHEAT		"resist_heat"
@@ -133,6 +143,7 @@
 #define TRAIT_LAW_ENFORCEMENT_METABOLISM "law-enforcement-metabolism"
 #define TRAIT_QUICK_CARRY		"quick-carry"
 #define TRAIT_QUICKER_CARRY		"quicker-carry"
+#define TRAIT_QUICK_BUILD		"quick-build"
 #define TRAIT_STRONG_GRABBER	"strong_grabber"
 #define TRAIT_CALCIUM_HEALER	"calcium_healer"
 #define TRAIT_MAGIC_CHOKE		"magic_choke"
@@ -145,6 +156,8 @@
 #define TRAIT_NORUNNING			"norunning"		// You walk!
 #define TRAIT_NOMARROW			"nomarrow"		// You don't make blood, with chemicals or nanites.
 #define TRAIT_NOPULSE			"nopulse"		// Your heart doesn't beat.
+#define TRAIT_NOGUT				"nogutting"		//Your chest cant be gutted of organs
+#define TRAIT_NODECAP			"nodecapping"	//Your head cant be cut off in combat
 #define TRAIT_EXEMPT_HEALTH_EVENTS	"exempt-health-events"
 #define TRAIT_NO_MIDROUND_ANTAG	"no-midround-antag" //can't be turned into an antag by random events
 #define TRAIT_PUGILIST	"pugilist" //This guy punches people for a living
@@ -152,6 +165,7 @@
 #define TRAIT_PASSTABLE			"passtable"
 #define TRAIT_GIANT				"giant"
 #define TRAIT_DWARF				"dwarf"
+#define TRAIT_ALCOHOL_LIGHTWEIGHT		"alcohol_lightweight" //Skyrat change
 #define TRAIT_ALCOHOL_TOLERANCE	"alcohol_tolerance"
 #define TRAIT_AGEUSIA			"ageusia"
 #define TRAIT_HEAVY_SLEEPER		"heavy_sleeper"
@@ -177,17 +191,44 @@
 #define TRAIT_PARA              "paraplegic"
 #define TRAIT_EMPATH			"empath"
 #define TRAIT_FRIENDLY			"friendly"
+#define TRAIT_SNOB				"snob"
 #define TRAIT_CULT_EYES 		"cult_eyes"
 #define TRAIT_AUTO_CATCH_ITEM	"auto_catch_item"
 #define TRAIT_CLOWN_MENTALITY	"clown_mentality" // The future is now, clownman.
 #define TRAIT_FREESPRINT		"free_sprinting"
+#define TRAIT_PAINKILLER        "painkiller" //-SKYRAT EDIT | ADDS PAINKILLER TRAIT -
 #define TRAIT_XRAY_VISION       "xray_vision"
 #define TRAIT_THERMAL_VISION    "thermal_vision"
 #define TRAIT_NO_TELEPORT		"no-teleport" //you just can't
 #define TRAIT_NO_INTERNALS		"no-internals"
 #define TRAIT_NO_ALCOHOL		"alcohol_intolerance"
 #define TRAIT_MUTATION_STASIS			"mutation_stasis" //Prevents processed genetics mutations from processing.
-#define TRAIT_FAST_PUMP				"fast_pump"	
+#define TRAIT_FAST_PUMP				"fast_pump"
+#define TRAIT_NICE_SHOT			"nice_shot" //hnnnnnnnggggg..... you're pretty good....
+//SKYRAT traits
+#define TRAIT_SCREWY_MOOD		"screwy_mood"
+#define TRAIT_SCREWY_CHECKSELF	"screwy_checkself"
+#define TRAIT_HARD_SOLES		"hard_soles"
+#define TRAIT_HEMOPHILIA		"hemophilia"
+#define TRAIT_EASYINTERNALBLEED "easy_internalbleed"
+#define TRAIT_EASYCUT			"easy_cut"
+#define TRAIT_EASYBURN			"easy_burn"
+#define TRAIT_EASYBLUNT			"easy_blunt"
+#define TRAIT_GLASSJAW			"glass_jaw"
+#define TRAIT_ASTHMATIC			"asthmatic"
+#define TRAIT_SYNTH				"synthetic"	//robotic boy
+#define TRAIT_TOXIMMUNE			"toxin_immune"
+#define TRAIT_CLONEIMMUNE		"clone_immune" //This is for clone damage
+#define TRAIT_DNC		"cant_clone"
+#define TRAIT_DNR		"cant_revive" //You just can't be revived without supernatural means
+#define TRAIT_NODETERMINATION	"no_determination" //tfw no undertales
+#define TRAIT_NODEFIB			"no_defib" //Can't use a defib to revive
+#define TRAIT_LOOKSCONSCIOUS	"looks_conscious" //fake conscious
+#define TRAIT_LOOKSSLEEPY		"looks_sleepy" //fake sleep
+#define TRAIT_LOOKSUNCONSCIOUS	"looks_unconscious" //fake fainting
+#define TRAIT_LOOKSVERYUNCONSCIOUS	"looks_very_unconscious" //fake shock
+#define TRAIT_LOOKSDEAD			"looks_dead" //fake death
+//
 
 // mobility flag traits
 // IN THE FUTURE, IT WOULD BE NICE TO DO SOMETHING SIMILAR TO https://github.com/tgstation/tgstation/pull/48923/files (ofcourse not nearly the same because I have my.. thoughts on it)
@@ -217,6 +258,8 @@
 #define VEHICLE_TRAIT "vehicle" // inherited from riding vehicles
 #define INNATE_TRAIT "innate"
 
+///Used for managing KEEP_TOGETHER in [appearance_flags]
+#define TRAIT_KEEP_TOGETHER 	"keep-together"
 
 // item traits
 #define TRAIT_NODROP            "nodrop"
@@ -248,7 +291,7 @@
 #define BOOK_TRAIT "granter (book)" // knowledge is power
 
 // unique trait sources, still defines
-#define STATUE_MUTE "statue"
+#define STATUE_TRAIT "statue"
 #define CLONING_POD_TRAIT "cloning-pod"
 #define VIRTUAL_REALITY_TRAIT "vr_trait"
 #define CHANGELING_DRAIN "drain"
@@ -289,3 +332,9 @@
 #define CLOWNOP_TRAIT "clown-op"
 #define MEGAFAUNA_TRAIT "megafauna"
 #define DEATHSQUAD_TRAIT "deathsquad"
+
+/// This trait is added by the active directional block system.
+#define ACTIVE_BLOCK_TRAIT				"active_block"
+/// This trait is added by the parry system.
+#define ACTIVE_PARRY_TRAIT				"active_parry"
+#define STICKY_NODROP "sticky-nodrop" //sticky nodrop sounds like a bad soundcloud rapper's name

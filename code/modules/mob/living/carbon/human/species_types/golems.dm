@@ -2,7 +2,7 @@
 	// Animated beings of stone. They have increased defenses, and do not need to breathe. They're also slow as fuuuck.
 	name = "Golem"
 	id = "iron golem"
-	species_traits = list(NOBLOOD,MUTCOLORS,NO_UNDERWEAR,NOGENITALS,NOAROUSAL)
+	species_traits = list(NOBLOOD,MUTCOLORS,NO_UNDERWEAR,NOGENITALS,NOAROUSAL,HAS_BONE)
 	inherent_traits = list(TRAIT_RESISTHEAT,TRAIT_NOBREATH,TRAIT_RESISTCOLD,TRAIT_RESISTHIGHPRESSURE,TRAIT_RESISTLOWPRESSURE,TRAIT_NOFIRE,TRAIT_CHUNKYFINGERS,TRAIT_RADIMMUNE,TRAIT_PIERCEIMMUNE,TRAIT_NODISMEMBER)
 	inherent_biotypes = MOB_HUMANOID|MOB_MINERAL
 	mutant_organs = list(/obj/item/organ/adamantine_resonator)
@@ -280,27 +280,15 @@
 	. = ..()
 	C.faction |= "plants"
 	C.faction |= "vines"
+	C.AddElement(/datum/element/photosynthesis)
 
 /datum/species/golem/wood/on_species_loss(mob/living/carbon/C)
 	. = ..()
 	C.faction -= "plants"
 	C.faction -= "vines"
+	C.RemoveElement(/datum/element/photosynthesis)
 
 /datum/species/golem/wood/spec_life(mob/living/carbon/human/H)
-	if(H.stat == DEAD)
-		return
-	var/light_amount = 0 //how much light there is in the place, affects receiving nutrition and healing
-	if(isturf(H.loc)) //else, there's considered to be no light
-		var/turf/T = H.loc
-		light_amount = min(1,T.get_lumcount()) - 0.5
-		H.nutrition += light_amount * 10
-		if(H.nutrition > NUTRITION_LEVEL_FULL)
-			H.nutrition = NUTRITION_LEVEL_FULL
-		if(light_amount > 0.2) //if there's enough light, heal
-			H.heal_overall_damage(1,1)
-			H.adjustToxLoss(-1)
-			H.adjustOxyLoss(-1)
-
 	if(H.nutrition < NUTRITION_LEVEL_STARVING + 50)
 		H.take_overall_damage(2,0)
 

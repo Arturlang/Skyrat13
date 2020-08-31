@@ -43,10 +43,14 @@
 				to_chat(owner, "<span class='warning'>Lesser beings require a tighter grip.</span>")
 			return FALSE
 		// Bloodsuckers:
-		else if(iscarbon(target) && target.mind && target.mind.has_antag_datum(ANTAG_DATUM_BLOODSUCKER))
-			if(display_error)
-				to_chat(owner, "<span class='warning'>Other Bloodsuckers will not fall for your subtle approach.</span>")
-			return FALSE
+		else if(ishuman(target))
+			var/mob/living/carbon/human/H = target
+			if(!H.can_inject(owner, TRUE, BODY_ZONE_CHEST))
+				return FALSE
+			if(target.mind && target.mind.has_antag_datum(ANTAG_DATUM_BLOODSUCKER))
+				if(display_error)
+					to_chat(owner, "<span class='warning'>Other Bloodsuckers will not fall for your subtle approach.</span>")
+				return FALSE
 	// Must have Target
 	if(!target)	 //  || !ismob(target)
 		if(display_error)
@@ -61,8 +65,17 @@
 		if(display_error)
 			to_chat(owner, "<span class='warning'>Your victim has no blood to take.</span>")
 		return FALSE
+	if(iscarbon(target))
+		var/mob/living/carbon/C = target
+		var/datum/dna/deeanda = C.dna
+		if(deeanda?.monkey_aspect)
+			if(display_error)
+				to_chat(owner, "<span class='warning'>You cannot feed on the simple-minded.</span>")
+			return FALSE
 	if(ishuman(target))
 		var/mob/living/carbon/human/H = target
+		if(!H.can_inject(owner, TRUE, BODY_ZONE_HEAD) && target == owner.pulling && owner.grab_state < GRAB_AGGRESSIVE)
+			return FALSE
 		if(NOBLOOD in H.dna.species.species_traits)// || owner.get_blood_id() != target.get_blood_id())
 			if(display_error)
 				to_chat(owner, "<span class='warning'>Your victim's blood is not suitable for you to take.</span>")
@@ -169,8 +182,8 @@
 						 	 vision_distance = notice_range, ignored_mobs = target) // Only people who AREN'T the target will notice this action.
 		// Warn Feeder about Witnesses...
 		var/was_unnoticed = TRUE
-		for(var/mob/living/M in viewers(notice_range, owner))
-			if(M != owner && M != target && iscarbon(M) && M.mind && !M.silicon_privileges && !M.eye_blind && !M.mind.has_antag_datum(ANTAG_DATUM_BLOODSUCKER))
+		for(var/mob/living/M in fov_viewers(notice_range, owner) - owner - target)
+			if(M.client && !M.silicon_privileges && !M.eye_blind && !M.mind.has_antag_datum(ANTAG_DATUM_BLOODSUCKER))
 				was_unnoticed = FALSE
 				break
 		if(was_unnoticed)
@@ -220,7 +233,12 @@
 				playsound(get_turf(target), 'sound/effects/splat.ogg', 40, 1)
 				if(ishuman(target))
 					var/mob/living/carbon/human/H = target
-					H.bleed_rate += 5
+					//skyrat edit
+					for(var/x in H.bodyparts)
+						var/obj/item/bodypart/BP = x
+						if(istype(BP))
+							BP.generic_bleedstacks += 2
+					//
 				target.add_splatter_floor(get_turf(target))
 				user.add_mob_blood(target) // Put target's blood on us. The donor goes in the ( )
 				target.add_mob_blood(target)

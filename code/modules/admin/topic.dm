@@ -952,7 +952,7 @@
 		if(jobban_isbanned(M, ROLE_TRAITOR) || isbanned_dept)
 			dat += "<td width='20%'><a href='?src=[REF(src)];[HrefToken()];jobban3=traitor;jobban4=[REF(M)]'><font color=red>Traitor</font></a></td>"
 		else
-			dat += "<td width='20%'><a href='?src=[REF(src)];jobban3=traitor;jobban4=[REF(M)]'>Traitor</a></td>"
+			dat += "<td width='20%'><a href='?src=[REF(src)];[HrefToken()];jobban3=traitor;jobban4=[REF(M)]'>Traitor</a></td>"
 
 		//Changeling
 		if(jobban_isbanned(M, ROLE_CHANGELING) || isbanned_dept)
@@ -1401,9 +1401,15 @@
 				log_admin_private("[key_name(usr)] has banned [key_name(M)].\nReason: [key_name(M)]\nThis will be removed in [mins] minutes.")
 				var/msg = "<span class='adminnotice'>[key_name_admin(usr)] has banned [key_name_admin(M)].\nReason: [reason]\nThis will be removed in [mins] minutes.</span>"
 				message_admins(msg)
-				var/datum/admin_help/AH = M.client ? M.client.current_ticket : null
-				if(AH)
-					AH.Resolve()
+				
+				// Skyrat change START
+				if (M.client)
+					for(var/ticket in M.client.tickets)
+						var/datum/admin_help/AH = ticket
+						if(AH)
+							AH.Resolve()
+				// Skyrat change END
+
 				qdel(M.client)
 			if("No")
 				var/reason = input(usr,"Please State Reason For Banning [M.key].","Reason") as message|null
@@ -1430,9 +1436,15 @@
 				log_admin_private("[key_name(usr)] has banned [key_name(M)].\nReason: [reason]\nThis is a permanent ban.")
 				var/msg = "<span class='adminnotice'>[key_name_admin(usr)] has banned [key_name_admin(M)].\nReason: [reason]\nThis is a permanent ban.</span>"
 				message_admins(msg)
-				var/datum/admin_help/AH = M.client ? M.client.current_ticket : null
-				if(AH)
-					AH.Resolve()
+				
+				// Skyrat change START
+				if (M.client)
+					for(var/ticket in M.client.tickets)
+						var/datum/admin_help/AH = ticket
+						if(AH)
+							AH.Resolve()
+				// Skyrat change END
+
 				qdel(M.client)
 			if("Cancel")
 				return
@@ -1482,6 +1494,32 @@
 		Game()
 		log_admin("[key_name(usr)] removed [rule] from the forced roundstart rulesets.")
 		message_admins("[key_name(usr)] removed [rule] from the forced roundstart rulesets.", 1)
+
+	else if(href_list["f_dynamic_storyteller"])
+		if(!check_rights(R_ADMIN))
+			return
+		if(SSticker && SSticker.mode)
+			return alert(usr, "The game has already started.", null, null, null, null)
+		if(GLOB.master_mode != "dynamic")
+			return alert(usr, "The game mode has to be dynamic mode.", null, null, null, null)
+		var/list/choices = list()
+		for(var/T in config.storyteller_cache)
+			var/datum/dynamic_storyteller/S = T
+			choices[initial(S.name)] = T
+		var/choice = choices[input("Select storyteller:", "Storyteller", "Classic") as null|anything in choices]
+		if(choice)
+			GLOB.dynamic_forced_storyteller = choice
+			log_admin("[key_name(usr)] forced the storyteller to [GLOB.dynamic_forced_storyteller].")
+			message_admins("[key_name(usr)] forced the storyteller to [GLOB.dynamic_forced_storyteller].")
+			Game()
+
+	else if(href_list["f_dynamic_storyteller_clear"])
+		if(!check_rights(R_ADMIN))
+			return
+		GLOB.dynamic_forced_storyteller = null
+		Game()
+		log_admin("[key_name(usr)] cleared the forced storyteller. The mode will pick one as normal.")
+		message_admins("[key_name(usr)] cleared the forced storyteller. The mode will pick one as normal.", 1)
 
 	else if(href_list["f_dynamic_latejoin"])
 		if(!check_rights(R_ADMIN))
@@ -2065,7 +2103,7 @@
 		show_player_panel(M)
 
 	else if(href_list["adminplayerobservefollow"])
-		if(!isobserver(usr) && !check_rights(R_ADMIN))
+		if(!isobserver(usr) && !check_rights(0)) //Skyrat change
 			return
 
 		var/atom/movable/AM = locate(href_list["adminplayerobservefollow"])
@@ -2086,7 +2124,7 @@
 		AM.forceMove(get_turf(usr))
 
 	else if(href_list["adminplayerobservecoodjump"])
-		if(!isobserver(usr) && !check_rights(R_ADMIN))
+		if(!isobserver(usr) && !check_rights(0)) //Skyrat change
 			return
 
 		var/x = text2num(href_list["X"])
@@ -2295,6 +2333,18 @@
 		var/mob/M = locate(href_list["HeadsetMessage"])
 		usr.client.admin_headset_message(M)
 
+//SKYRAT CHANGES BEGIN
+	else if(href_list["ObjectiveRequest"])
+		if(!check_rights(R_ADMIN))
+			return
+		var/datum/mind/requesting_mind = locate(href_list["ObjectiveRequest"])
+		if(!istype(requesting_mind) || QDELETED(requesting_mind))
+			to_chat(usr, "<span class='warning'>This mind reference is no longer valid. It has probably since been destroyed.</span>")
+			return
+		requesting_mind.do_edit_objectives_ambitions()
+		return
+//SKYRAT CHANGES END
+
 	else if(href_list["reject_custom_name"])
 		if(!check_rights(R_ADMIN))
 			return
@@ -2302,7 +2352,7 @@
 		if(istype(charter))
 			charter.reject_proposed(usr)
 	else if(href_list["jumpto"])
-		if(!isobserver(usr) && !check_rights(R_ADMIN))
+		if(!isobserver(usr) && !check_rights(0)) //Skyrat change
 			return
 
 		var/mob/M = locate(href_list["jumpto"])
@@ -2952,7 +3002,7 @@
 /datum/admins/proc/makeMentor(ckey)
 	if(!usr.client)
 		return
-	if (!check_rights(0))
+	if (!check_rights(R_PERMISSIONS)) //Skyrat change
 		return
 	if(!ckey)
 		return
@@ -2982,7 +3032,7 @@
 /datum/admins/proc/removeMentor(ckey)
 	if(!usr.client)
 		return
-	if (!check_rights(0))
+	if (!check_rights(R_PERMISSIONS)) // Skyrat change
 		return
 	if(!ckey)
 		return

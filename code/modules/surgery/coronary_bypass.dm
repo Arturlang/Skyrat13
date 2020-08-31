@@ -3,6 +3,7 @@
 	steps = list(/datum/surgery_step/incise, /datum/surgery_step/retract_skin, /datum/surgery_step/saw, /datum/surgery_step/clamp_bleeders,
 				 /datum/surgery_step/incise_heart, /datum/surgery_step/coronary_bypass, /datum/surgery_step/close)
 	possible_locs = list(BODY_ZONE_CHEST)
+	requires_bodypart_type = BODYPART_ORGANIC //Skyrat change
 
 /datum/surgery/coronary_bypass/can_start(mob/user, mob/living/carbon/target, obj/item/tool)
 	var/obj/item/organ/heart/H = target.getorganslot(ORGAN_SLOT_HEART)
@@ -14,7 +15,7 @@
 
 //an incision but with greater bleed, and a 90% base success chance
 /datum/surgery_step/incise_heart
-	name = "incise heart"
+	name = "Incise heart"
 	implements = list(TOOL_SCALPEL = 90, /obj/item/melee/transforming/energy/sword = 45, /obj/item/kitchen/knife = 45,
 		/obj/item/shard = 25)
 	time = 16
@@ -31,7 +32,10 @@
 			display_results(user, target, "<span class='notice'>Blood pools around the incision in [H]'s heart.</span>",
 				"Blood pools around the incision in [H]'s heart.",
 				"")
-			H.bleed_rate += 10
+			//skyrat edit
+			var/obj/item/bodypart/BP = H.get_bodypart(target_zone)
+			BP.generic_bleedstacks += 10
+			//
 			H.adjustBruteLoss(10)
 	return TRUE
 
@@ -41,13 +45,16 @@
 		display_results(user, target, "<span class='warning'>You screw up, cutting too deeply into the heart!</span>",
 			"<span class='warning'>[user] screws up, causing blood to spurt out of [H]'s chest!</span>",
 			"<span class='warning'>[user] screws up, causing blood to spurt out of [H]'s chest!</span>")
-		H.bleed_rate += 20
+		//skyrat edit
+		var/obj/item/bodypart/BP = H.get_bodypart(target_zone)
+		BP.generic_bleedstacks += 10
+		//
 		H.adjustOrganLoss(ORGAN_SLOT_HEART, 10)
 		H.adjustBruteLoss(10)
 
 //grafts a coronary bypass onto the individual's heart, success chance is 90% base again
 /datum/surgery_step/coronary_bypass
-	name = "graft coronary bypass"
+	name = "Graft coronary bypass"
 	implements = list(TOOL_HEMOSTAT = 90, TOOL_WIRECUTTER = 35, /obj/item/stack/packageWrap = 15, /obj/item/stack/cable_coil = 5)
 	time = 90
 
@@ -73,5 +80,8 @@
 			"<span class='warning'>[user] screws up, causing blood to spurt out of [H]'s chest profusely!</span>",
 			"<span class='warning'>[user] screws up, causing blood to spurt out of [H]'s chest profusely!</span>")
 		H.adjustOrganLoss(ORGAN_SLOT_HEART, 20)
-		H.bleed_rate += 30
+		//skyrat edit
+		var/obj/item/bodypart/BP = H.get_bodypart(target_zone)
+		BP.generic_bleedstacks += 30
+		//
 	return FALSE

@@ -61,31 +61,41 @@
 			req_one_access += b
 
 // Check if an item has access to this object
-/obj/proc/check_access(obj/item/I)
-	return check_access_list(I ? I.GetAccess() : null)
+/obj/proc/check_access(obj/item/I, list/forced_access = null)
+	if(!length(forced_access))
+		return check_access_list(I ? I.GetAccess() : null)
+	else
+		return check_access_list(I ? I.GetAccess() : null, forced_access)
 
-/obj/proc/check_access_list(list/access_list)
+/obj/proc/check_access_list(list/access_list, list/forced_access)
 	gen_access()
 
 	if(!islist(req_access)) //something's very wrong
 		return TRUE
 
-	if(!req_access.len && !length(req_one_access))
+	if(!length(req_access) && !length(req_one_access) && !length(forced_access))
 		return TRUE
 
 	if(!length(access_list) || !islist(access_list))
 		return FALSE
 
-	for(var/req in req_access)
-		if(!(req in access_list)) //doesn't have this access
-			return FALSE
+	var/access = TRUE
+	if(!length(forced_access))
+		if(length(req_access))
+			for(var/req in req_access)
+				if(!(req in access_list)) //doesn't have this access
+					access = FALSE
 
-	if(length(req_one_access))
-		for(var/req in req_one_access)
-			if(req in access_list) //has an access from the single access list
-				return TRUE
-		return FALSE
-	return TRUE
+		else if(length(req_one_access))
+			access = FALSE
+			for(var/req in req_one_access)
+				if(req in access_list) //has an access from the single access list
+					access = TRUE
+	else
+		for(var/req in forced_access)
+			if(!(req in access_list))
+				access = FALSE
+	return access
 
 /obj/proc/check_access_ntnet(datum/netdata/data)
 	return check_access_list(data.passkey)
@@ -162,7 +172,7 @@
 		if(2) //security
 			return list(ACCESS_SEC_DOORS, ACCESS_WEAPONS, ACCESS_SECURITY, ACCESS_BRIG, ACCESS_ARMORY, ACCESS_FORENSICS_LOCKERS, ACCESS_COURT, ACCESS_HOS, ACCESS_ENTER_GENPOP, ACCESS_LEAVE_GENPOP,)
 		if(3) //medbay
-			return list(ACCESS_MEDICAL, ACCESS_GENETICS, ACCESS_CLONING, ACCESS_MORGUE, ACCESS_CHEMISTRY, ACCESS_VIROLOGY, ACCESS_SURGERY, ACCESS_CMO)
+			return list(ACCESS_MEDICAL, ACCESS_GENETICS, ACCESS_CLONING, ACCESS_MORGUE, ACCESS_CHEMISTRY, ACCESS_VIROLOGY, ACCESS_SURGERY, ACCESS_PSYCHOLOGY, ACCESS_CMO)  //Skyrat change
 		if(4) //research
 			return list(ACCESS_RESEARCH, ACCESS_TOX, ACCESS_TOX_STORAGE, ACCESS_GENETICS, ACCESS_ROBOTICS, ACCESS_XENOBIOLOGY, ACCESS_MINISAT, ACCESS_RD, ACCESS_NETWORK)
 		if(5) //engineering and maintenance
@@ -329,6 +339,8 @@
 			return "Network Access"
 		if(ACCESS_CLONING)
 			return "Cloning Room"
+		if(ACCESS_PSYCHOLOGY)
+			return "Psychology"
 
 /proc/get_centcom_access_desc(A)
 	switch(A)

@@ -66,7 +66,7 @@
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.01
 	body_parts_covered = CHEST|GROIN|LEGS|FEET|ARMS|HANDS
-	armor = list("melee" = 100, "bullet" = 100, "laser" = 100,"energy" = 100, "bomb" = 100, "bio" = 100, "rad" = 100, "fire" = 100, "acid" = 100)
+	armor = list("melee" = 100, "bullet" = 100, "laser" = 100,"energy" = 100, "bomb" = 100, "bio" = 100, "rad" = 100, "fire" = 100, "acid" = 100, "wound" = 100)
 	cold_protection = CHEST | GROIN | LEGS | FEET | ARMS | HANDS
 	min_cold_protection_temperature = SPACE_SUIT_MIN_TEMP_PROTECT
 	heat_protection = CHEST|GROIN|LEGS|FEET|ARMS|HANDS
@@ -102,7 +102,7 @@
 	mob_overlay_icon = 'goon/icons/mob/worn_js_rank.dmi'
 	icon_state = "assistant"
 	item_state = "gy_suit"
-	mutantrace_variation = NONE
+	mutantrace_variation = USE_TAUR_CLIP_MASK
 
 /obj/item/clothing/under/croptop
 	name = "crop top"
@@ -117,10 +117,10 @@
 	desc = "A special containment suit that allows plasma-based lifeforms to exist safely in an oxygenated environment, and automatically extinguishes them in a crisis. Despite being airtight, it's not spaceworthy."
 	icon_state = "plasmaman"
 	item_state = "plasmaman"
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 100, "rad" = 0, "fire" = 95, "acid" = 95)
+	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 100, "rad" = 0, "fire" = 95, "acid" = 95, "wound" = 3)
 	slowdown = 1
 	body_parts_covered = CHEST|GROIN|LEGS|FEET|ARMS|HANDS
-	mutantrace_variation = NONE
+	mutantrace_variation = USE_TAUR_CLIP_MASK
 	can_adjust = FALSE
 	strip_delay = 80
 	var/next_extinguish = 0
@@ -178,7 +178,7 @@
 	icon_state = "durathread"
 	item_state = "durathread"
 	can_adjust = TRUE
-	armor = list("melee" = 10, "laser" = 10, "fire" = 40, "acid" = 10, "bomb" = 5)
+	armor = list("melee" = 10, "laser" = 10, "fire" = 40, "acid" = 10, "bomb" = 5, "wound" = 3)
 
 /obj/item/clothing/under/misc/durathread/skirt
 	name = "durathread jumpskirt"
@@ -195,7 +195,7 @@
 	icon_state = "squatteroutfit"
 	item_state = "squatteroutfit"
 	can_adjust = FALSE
-	mutantrace_variation = NONE
+	mutantrace_variation = USE_TAUR_CLIP_MASK
 
 /obj/item/clothing/under/misc/blue_camo
 	name = "russian blue camo"
@@ -203,7 +203,7 @@
 	icon_state = "russobluecamo"
 	item_state = "russobluecamo"
 	can_adjust = FALSE
-	mutantrace_variation = NONE
+	mutantrace_variation = USE_TAUR_CLIP_MASK
 
 /obj/item/clothing/under/misc/keyholesweater
 	name = "keyhole sweater"
@@ -237,7 +237,7 @@
 	icon_state = "tssuit"
 	item_state = "r_suit"
 	can_adjust = FALSE
-	mutantrace_variation = NONE
+	mutantrace_variation = USE_TAUR_CLIP_MASK
 
 /obj/item/clothing/under/misc/poly_shirt
 	name = "polychromic button-up shirt"

@@ -33,7 +33,7 @@
 	icon_state = "reactiveoff"
 	item_state = "reactiveoff"
 	blood_overlay_type = "armor"
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 100)
+	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 100, "wound" = 10)
 	actions_types = list(/datum/action/item_action/toggle)
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ACID_PROOF
 	rad_flags = RAD_PROTECT_CONTENTS | RAD_NO_CONTAMINATE
@@ -164,21 +164,21 @@
 	desc = "An experimental suit of armor with sensitive detectors hooked up to a huge capacitor grid, with emitters strutting out of it. Zap."
 	siemens_coefficient = -1
 	reactivearmor_cooldown_duration = 20
-	var/tesla_power = 25000
-	var/tesla_range = 20
-	var/tesla_flags = TESLA_MOB_DAMAGE | TESLA_OBJ_DAMAGE
+	var/zap_power = 25000
+	var/zap_range = 20
+	var/zap_flags = ZAP_MOB_DAMAGE | ZAP_OBJ_DAMAGE
 	var/legacy = FALSE
 	var/legacy_dmg = 30
 
 /obj/item/clothing/suit/armor/reactive/tesla/dropped(mob/user)
 	..()
 	if(istype(user))
-		user.flags_1 &= ~TESLA_IGNORE_1
+		REMOVE_TRAIT(user, TRAIT_TESLA_SHOCKIMMUNE, "reactive_tesla_armor")
 
 /obj/item/clothing/suit/armor/reactive/tesla/equipped(mob/user, slot)
 	..()
 	if(slot_flags & slotdefine2slotbit(slot)) //Was equipped to a valid slot for this item?
-		user.flags_1 |= TESLA_IGNORE_1
+		ADD_TRAIT(user, TRAIT_TESLA_SHOCKIMMUNE, "reactive_tesla_armor")
 
 /obj/item/clothing/suit/armor/reactive/tesla/block_action(mob/living/owner, atom/object, damage, attack_text, attack_type, armour_penetration, mob/attacker, def_zone, final_block_chance, list/block_return)
 	if(prob(hit_reaction_chance))
@@ -190,7 +190,7 @@
 			return
 		owner.visible_message("<span class='danger'>[src] blocks [attack_text], sending out arcs of lightning!</span>")
 		if(!legacy)
-			tesla_zap(owner, tesla_range, tesla_power, tesla_flags)
+			tesla_zap(owner, zap_range, zap_power, zap_flags)
 		else
 			for(var/mob/living/M in view(7, owner))
 				if(M == owner)

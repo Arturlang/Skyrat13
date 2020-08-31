@@ -1,3 +1,4 @@
+/* moved to modular_skyrat
 /obj/item/organ/heart
 	name = "heart"
 	desc = "I feel bad for the heartless bastard who lost this."
@@ -61,10 +62,10 @@
 		return "a healthy"
 	return "<span class='danger'>an unstable</span>"
 
-/obj/item/organ/heart/prepare_eat()
-	var/obj/S = ..()
-	S.icon_state = "[icon_base]-off"
-	return S
+/obj/item/organ/heart/OnEatFrom(eater, feeder)
+	. = ..()
+	beating = FALSE
+	update_icon()
 
 /obj/item/organ/heart/on_life()
 	. = ..()
@@ -221,7 +222,7 @@ obj/item/organ/heart/cybernetic/upgraded/on_life()
 		used_dose()
 	if(ramount < 10) //eats your nutrition to regen epinephrine
 		var/regen_amount = owner.nutrition/2000
-		owner.nutrition -= regen_amount
+		owner.adjust_nutrition(-regen_amount)
 		ramount += regen_amount
 
 /obj/item/organ/heart/cybernetic/upgraded/proc/used_dose()
@@ -247,3 +248,4 @@ obj/item/organ/heart/cybernetic/upgraded/on_life()
 		owner.heal_overall_damage(15, 15)
 		if(owner.reagents.get_reagent_amount(/datum/reagent/medicine/ephedrine) < 20)
 			owner.reagents.add_reagent(/datum/reagent/medicine/ephedrine, 10)
+*/

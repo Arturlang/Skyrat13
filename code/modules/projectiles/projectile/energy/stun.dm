@@ -10,12 +10,13 @@
 	jitter = 20
 	hitsound = 'sound/weapons/taserhit.ogg'
 	range = 14
-	speed = 0.6
+	pixels_per_second = TILES_TO_PIXELS(16.667)
 	tracer_type = /obj/effect/projectile/tracer/stun
 	muzzle_type = /obj/effect/projectile/muzzle/stun
 	impact_type = /obj/effect/projectile/impact/stun
 	var/tase_duration = 50
 	var/strong_tase = TRUE
+	wound_bonus = CANT_WOUND
 
 /obj/item/projectile/energy/electrode/on_hit(atom/target, blocked = FALSE)
 	. = ..()

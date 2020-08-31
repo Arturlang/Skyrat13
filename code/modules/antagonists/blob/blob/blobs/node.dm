@@ -3,7 +3,7 @@
 	icon = 'icons/mob/blob.dmi'
 	icon_state = "blank_blob"
 	desc = "A large, pulsating yellow mass."
-	max_integrity = 200
+	max_integrity = 400 //Skyrat Change
 	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 65, "acid" = 90)
 	health_regen = 3
 	point_return = 25
@@ -34,3 +34,8 @@
 /obj/structure/blob/node/process()
 	if(overmind)
 		Pulse_Area(overmind, 10, 3, 2)
+	// SKYRAT EDIT START - BLOB
+	for(var/obj/structure/blob/normal/B in range(1, src))
+		if(prob(5))
+			B.change_to(/obj/structure/blob/shield/core, overmind)
+	// SKYRAT EDIT END - BLOB

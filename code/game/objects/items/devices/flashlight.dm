@@ -1,6 +1,7 @@
 /obj/item/flashlight
 	name = "flashlight"
 	desc = "A hand-held emergency light."
+	custom_price = PRICE_REALLY_CHEAP
 	icon = 'icons/obj/lighting.dmi'
 	icon_state = "flashlight"
 	item_state = "flashlight"
@@ -20,18 +21,21 @@
 	. = ..()
 	if(icon_state == "[initial(icon_state)]-on")
 		on = TRUE
+	AddComponent(/datum/component/overlay_lighting, light_color, brightness_on, flashlight_power, FALSE) //Skyrat change
 	update_brightness()
 
 /obj/item/flashlight/proc/update_brightness(mob/user = null)
+	var/datum/component/overlay_lighting/OL = GetComponent(/datum/component/overlay_lighting)
 	if(on)
 		icon_state = "[initial(icon_state)]-on"
-		if(flashlight_power)
+		/*if(flashlight_power)
 			set_light(l_range = brightness_on, l_power = flashlight_power)
 		else
-			set_light(brightness_on)
+			set_light(brightness_on)*/
+		OL.turn_on()
 	else
 		icon_state = initial(icon_state)
-		set_light(0)
+		OL.turn_off()
 
 /obj/item/flashlight/attack_self(mob/user)
 	on = !on
@@ -182,7 +186,7 @@
 		var/T = get_turf(target)
 		if(locate(/mob/living) in T)
 			new /obj/effect/temp_visual/medical_holosign(T,user) //produce a holographic glow
-			holo_cooldown = world.time + 100
+			holo_cooldown = world.time + 10 SECONDS //skyrat change
 			return
 
 /obj/effect/temp_visual/medical_holosign
@@ -210,6 +214,7 @@
 	light_color = "#CDDDFF"
 	flashlight_power = 0.9
 	hitsound = 'sound/weapons/genhit1.ogg'
+	custom_price = PRICE_ALMOST_CHEAP
 
 // the desk lamps are a bit special
 /obj/item/flashlight/lamp
@@ -350,6 +355,30 @@
 	brightness_on = 6	// luminosity when on
 	light_color = "#FFAA44"
 	flashlight_power = 0.8
+	custom_price = PRICE_CHEAP
+
+/obj/item/flashlight/lantern/jade
+	name = "jade lantern"
+	desc = "An ornate, green lantern."
+	color = LIGHT_COLOR_GREEN
+	light_color = LIGHT_COLOR_GREEN
+
+//Skyrat edit - möth
+/obj/item/flashlight/lantern/heirloom_moth
+	name = "old lantern"
+	desc = "An old lantern that has seen plenty of use."
+	brightness_on = 4
+
+/obj/item/flashlight/lantern/syndicate
+	name = "suspicious lantern"
+	desc = "A suspicious looking lantern."
+	icon = 'modular_skyrat/icons/obj/lamp.dmi'
+	righthand_file = 'modular_skyrat/icons/mob/inhands/lamp_righthand.dmi'
+	lefthand_file = 'modular_skyrat/icons/mob/inhands/lamp_lefthand.dmi'
+	icon_state = "syndilantern"
+	item_state = "syndilantern"
+	brightness_on = 10
+//
 
 /obj/item/flashlight/slime
 	gender = PLURAL
@@ -422,6 +451,7 @@
 /obj/item/flashlight/glowstick
 	name = "glowstick"
 	desc = "A military-grade glowstick."
+	custom_price = PRICE_CHEAP_AS_FREE
 	w_class = WEIGHT_CLASS_SMALL
 	brightness_on = 4
 	color = LIGHT_COLOR_GREEN
@@ -454,16 +484,17 @@
 /obj/item/flashlight/glowstick/update_icon_state()
 	item_state = "glowstick"
 	cut_overlays()
+	var/datum/component/overlay_lighting/OL = GetComponent(/datum/component/overlay_lighting)
 	if(!fuel)
 		icon_state = "glowstick-empty"
 		cut_overlays()
-		set_light(0)
+		OL.turn_off()
 	else if(on)
 		var/mutable_appearance/glowstick_overlay = mutable_appearance(icon, "glowstick-glow")
 		glowstick_overlay.color = color
 		add_overlay(glowstick_overlay)
 		item_state = "glowstick-on"
-		set_light(brightness_on)
+		OL.turn_on()
 	else
 		icon_state = "glowstick"
 		cut_overlays()
@@ -533,6 +564,7 @@
 	item_state = "flashdark"
 	brightness_on = 2.5
 	flashlight_power = -3
+	color = "#000000" //Skyrat change
 
 /obj/item/flashlight/eyelight
 	name = "eyelight"

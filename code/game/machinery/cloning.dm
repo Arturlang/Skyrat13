@@ -1,3 +1,4 @@
+/* moved to modular_skyrat
 //Cloning revival method.
 //The pod handles the actual cloning while the computer manages the clone profiles
 
@@ -37,6 +38,9 @@
 
 	var/list/unattached_flesh
 	var/flesh_number = 0
+	var/datum/bank_account/current_insurance
+	fair_market_price = 5 // He nodded, because he knew I was right. Then he swiped his credit card to pay me for arresting him.
+	payment_department = ACCOUNT_MED
 
 /obj/machinery/clonepod/Initialize()
 	. = ..()
@@ -131,7 +135,7 @@
 	return examine(user)
 
 //Start growing a human clone in the pod!
-/obj/machinery/clonepod/proc/growclone(ckey, clonename, ui, mutation_index, mindref, datum/species/mrace, list/features, factions, list/quirks)
+/obj/machinery/clonepod/proc/growclone(ckey, clonename, ui, mutation_index, mindref, datum/species/mrace, list/features, factions, list/quirks, datum/bank_account/insurance, list/traumas)
 	if(panel_open)
 		return FALSE
 	if(mess || attempting)
@@ -161,7 +165,7 @@
 		mess = TRUE
 		update_icon()
 		return FALSE
-
+	current_insurance = insurance
 	attempting = TRUE //One at a time!!
 	countdown.start()
 
@@ -206,6 +210,12 @@
 			var/datum/quirk/Q = new V(H)
 			Q.on_clone(quirks[V])
 
+		/*for(var/t in traumas) SKYRAT EDIT - lets not clone traumas just yet, rounds are too long
+			var/datum/brain_trauma/BT = t
+			var/datum/brain_trauma/cloned_trauma = BT.on_clone()
+			if(cloned_trauma)
+				H.gain_trauma(cloned_trauma, BT.resilience)*/
+
 		H.set_cloned_appearance()
 		H.give_genitals(TRUE)
 
@@ -224,15 +234,29 @@
 			connected_message("Clone Ejected: Loss of power.")
 
 	else if(mob_occupant && (mob_occupant.loc == src))
-		if((mob_occupant.stat == DEAD) || (mob_occupant.suiciding) || mob_occupant.hellbound)  //Autoeject corpses and suiciding dudes.
-			connected_message("Clone Rejected: Deceased.")
+		if(SSeconomy.full_ancap)
+			if(!current_insurance)
+				go_out()
+				connected_message("Clone Ejected: No bank account.")
+				if(internal_radio)
+					SPEAK("The cloning of [mob_occupant.real_name] has been terminated due to no bank account to draw payment from.")
+			else if(!current_insurance.adjust_money(-fair_market_price))
+				go_out()
+				connected_message("Clone Ejected: Out of Money.")
+				if(internal_radio)
+					SPEAK("The cloning of [mob_occupant.real_name] has been ended prematurely due to being unable to pay.")
+			else
+				var/datum/bank_account/D = SSeconomy.get_dep_account(payment_department)
+				if(D)
+					D.adjust_money(fair_market_price)
+		if(mob_occupant && (mob_occupant.stat == DEAD) || (mob_occupant.suiciding) || mob_occupant.hellbound)  //Autoeject corpses and suiciding dudes.			connected_message("Clone Rejected: Deceased.")
 			if(internal_radio)
 				SPEAK("The cloning has been \
 					aborted due to unrecoverable tissue failure.")
 			go_out()
 			mob_occupant.copy_from_prefs_vr()
 
-		else if(mob_occupant.cloneloss > (100 - heal_level))
+		else if(mob_occupant && mob_occupant.cloneloss > (100 - heal_level))
 			mob_occupant.Unconscious(80)
 			var/dmg_mult = CONFIG_GET(number/damage_multiplier)
 			 //Slowly get that clone healed and finished.
@@ -254,12 +278,9 @@
 					var/obj/item/bodypart/BP = I
 					BP.attach_limb(mob_occupant)
 
-			//Premature clones may have brain damage.
-			mob_occupant.adjustOrganLoss(ORGAN_SLOT_BRAIN, -((speed_coeff / 2) * dmg_mult))
-
 			use_power(7500) //This might need tweaking.
 
-		else if((mob_occupant.cloneloss <= (100 - heal_level)))
+		else if((mob_occupant && mob_occupant.cloneloss <= (100 - heal_level)))
 			connected_message("Cloning Process Complete.")
 			if(internal_radio)
 				SPEAK("The cloning cycle is complete.")
@@ -368,7 +389,7 @@
 
 	if(!mob_occupant)
 		return
-
+	current_insurance = null
 	REMOVE_TRAIT(mob_occupant, TRAIT_STABLEHEART, CLONING_POD_TRAIT)
 	REMOVE_TRAIT(mob_occupant, TRAIT_MUTATION_STASIS, CLONING_POD_TRAIT)
 	REMOVE_TRAIT(mob_occupant, TRAIT_STABLELIVER, CLONING_POD_TRAIT)
@@ -385,6 +406,8 @@
 		if(jobban_isbanned(mob_occupant) && ishuman(mob_occupant))	// SKYRAT ADDITION -- BEGIN
 			var/mob/living/carbon/human/C = mob_occupant
 			C.update_pacification_ban()	// SKYRAT ADDITION -- END
+
+	mob_occupant.adjustOrganLoss(ORGAN_SLOT_BRAIN, mob_occupant.getCloneLoss())
 
 	occupant.forceMove(T)
 	update_icon()
@@ -461,10 +484,9 @@
 		unattached_flesh.Cut()
 
 	H.setCloneLoss(CLONE_INITIAL_DAMAGE)     //Yeah, clones start with very low health, not with random, because why would they start with random health
-	//H.setOrganLoss(ORGAN_SLOT_BRAIN, CLONE_INITIAL_DAMAGE)
-	// In addition to being cellularly damaged and having barely any
-
-	// brain function, they also have no limbs or internal organs.
+	// In addition to being cellularly damaged, they also have no limbs or internal organs.
+	// Applying brainloss is done when the clone leaves the pod, so application of traumas can happen.
+	// based on the level of damage sustained.
 
 	if(!HAS_TRAIT(H, TRAIT_NODISMEMBER))
 		var/static/list/zones = list(BODY_ZONE_R_ARM, BODY_ZONE_L_ARM, BODY_ZONE_R_LEG, BODY_ZONE_L_LEG)
@@ -563,3 +585,4 @@
 #undef CLONE_INITIAL_DAMAGE
 #undef SPEAK
 #undef MINIMUM_HEAL_LEVEL
+*/

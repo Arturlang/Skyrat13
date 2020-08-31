@@ -8,17 +8,19 @@
 	var/power_on = 0.8
 	var/on = FALSE
 	var/hat_type = "yellow" //Determines used sprites: hardhat[on]_[hat_type] and hardhat[on]_[hat_type]2 (lying down sprite)
-	armor = list("melee" = 15, "bullet" = 5, "laser" = 20,"energy" = 10, "bomb" = 20, "bio" = 10, "rad" = 20, "fire" = 100, "acid" = 50)
+	armor = list("melee" = 15, "bullet" = 5, "laser" = 20,"energy" = 10, "bomb" = 20, "bio" = 10, "rad" = 20, "fire" = 100, "acid" = 50, "wound" = 7.5)
 	flags_inv = 0
 	actions_types = list(/datum/action/item_action/toggle_helmet_light)
 	resistance_flags = FIRE_PROOF
 	dynamic_hair_suffix = "+generic"
 
 	dog_fashion = /datum/dog_fashion/head
+	beepsky_fashion = /datum/beepsky_fashion/engineer
 
 
 /obj/item/clothing/head/hardhat/ComponentInitialize()
 	. = ..()
+	AddComponent(/datum/component/overlay_lighting, light_color, brightness_on, power_on, FALSE) //Skyrat change
 	AddElement(/datum/element/update_icon_updates_onmob)
 
 /obj/item/clothing/head/hardhat/attack_self(mob/living/user)
@@ -37,10 +39,12 @@
 	item_state = "hardhat[on]_[hat_type]"
 
 /obj/item/clothing/head/hardhat/proc/turn_on(mob/user)
-	set_light(brightness_on, power_on)
+	var/datum/component/overlay_lighting/OL = GetComponent(/datum/component/overlay_lighting)
+	OL.turn_on()
 
 /obj/item/clothing/head/hardhat/proc/turn_off(mob/user)
-	set_light(0)
+	var/datum/component/overlay_lighting/OL = GetComponent(/datum/component/overlay_lighting)
+	OL.turn_off()
 
 /obj/item/clothing/head/hardhat/orange
 	icon_state = "hardhat0_orange"
@@ -59,6 +63,16 @@
 	max_heat_protection_temperature = FIRE_HELM_MAX_TEMP_PROTECT
 	cold_protection = HEAD
 	min_cold_protection_temperature = FIRE_HELM_MIN_TEMP_PROTECT
+
+/obj/item/clothing/head/hardhat/red/upgraded
+	name = "workplace-ready firefighter helmet"
+	desc = "By applying state of the art lighting technology to a fire helmet, and using photo-chemical hardening methods, this hardhat will protect you from robust workplace hazards."
+	icon_state = "hardhat0_purple"
+	item_state = "hardhat0_purple"
+	brightness_on = 5
+	resistance_flags = FIRE_PROOF | ACID_PROOF
+	custom_materials = list(/datum/material/iron = 4000, /datum/material/glass = 1000, /datum/material/plastic = 3000, /datum/material/silver = 500)
+	hat_type = "purple"
 
 /obj/item/clothing/head/hardhat/white
 	icon_state = "hardhat0_white"

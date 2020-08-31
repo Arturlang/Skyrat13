@@ -37,10 +37,10 @@
 	if(empty)
 		return
 	new /obj/item/stack/medical/gauze(src)
-	new /obj/item/stack/medical/bruise_pack(src)
-	new /obj/item/stack/medical/bruise_pack(src)
-	new /obj/item/stack/medical/ointment(src)
-	new /obj/item/stack/medical/ointment(src)
+	new /obj/item/stack/medical/suture(src)
+	new /obj/item/stack/medical/suture(src)
+	new /obj/item/stack/medical/mesh(src)
+	new /obj/item/stack/medical/mesh(src)
 	new /obj/item/reagent_containers/hypospray/medipen(src)
 	new /obj/item/healthanalyzer(src)
 
@@ -73,9 +73,10 @@
 /obj/item/storage/firstaid/fire/PopulateContents()
 	if(empty)
 		return
-	for(var/i in 1 to 3)
-		new /obj/item/reagent_containers/pill/patch/silver_sulf(src)
-	new /obj/item/reagent_containers/pill/oxandrolone(src)
+	new /obj/item/stack/medical/gauze/adv(src)
+	new /obj/item/stack/medical/mesh/advanced(src)
+	new /obj/item/stack/medical/mesh(src)
+	new /obj/item/reagent_containers/medspray/sterilizine(src)
 	new /obj/item/reagent_containers/pill/oxandrolone(src)
 	new /obj/item/reagent_containers/hypospray/medipen(src)
 	new /obj/item/healthanalyzer(src)
@@ -140,7 +141,8 @@
 /obj/item/storage/firstaid/o2/PopulateContents()
 	if(empty)
 		return
-	for(var/i in 1 to 4)
+	new /obj/item/stack/medical/fixovein(src)
+	for(var/i in 1 to 3)
 		new /obj/item/reagent_containers/pill/salbutamol(src)
 	new /obj/item/reagent_containers/hypospray/medipen(src)
 	new /obj/item/reagent_containers/hypospray/medipen(src)
@@ -160,10 +162,12 @@
 /obj/item/storage/firstaid/brute/PopulateContents()
 	if(empty)
 		return
-	for(var/i in 1 to 4)
-		new /obj/item/reagent_containers/pill/patch/styptic(src)
-	new /obj/item/stack/medical/gauze(src)
-	new /obj/item/stack/medical/gauze(src)
+	new /obj/item/stack/medical/gauze/adv(src)
+	new /obj/item/stack/medical/suture/medicated(src)
+	new /obj/item/stack/medical/suture(src)
+	new /obj/item/stack/sticky_tape/surgical(src)
+	new /obj/item/stack/medical/bone_gel(src)
+	new /obj/item/bonesetter(src)
 	new /obj/item/healthanalyzer(src)
 
 /obj/item/storage/firstaid/tactical
@@ -182,11 +186,11 @@
 /obj/item/storage/firstaid/tactical/PopulateContents()
 	if(empty)
 		return
-	new /obj/item/stack/medical/gauze(src)
+	new /obj/item/stack/medical/gauze/adv(src)
 	new /obj/item/defibrillator/compact/combat/loaded(src)
 	new /obj/item/reagent_containers/hypospray/combat/omnizine(src)
-	new /obj/item/reagent_containers/medspray/styptic(src)
-	new /obj/item/reagent_containers/medspray/silver_sulf(src)
+	new /obj/item/stack/medical/mesh/advanced(src)
+	new /obj/item/stack/medical/suture/medicated(src)
 	new /obj/item/healthanalyzer/advanced(src)
 	new /obj/item/reagent_containers/syringe/lethal/choral(src) // what the fuck does anyone use this piece of shit for
 	new /obj/item/clothing/glasses/hud/health/night/syndicate(src)
@@ -197,11 +201,11 @@
 /obj/item/storage/firstaid/tactical/nukeop/PopulateContents()
 	if(empty)
 		return
-	new /obj/item/stack/medical/gauze(src)
+	new /obj/item/stack/medical/gauze/adv(src)
 	new /obj/item/defibrillator/compact/combat/loaded(src)
 	new /obj/item/reagent_containers/hypospray/combat(src)
-	new /obj/item/reagent_containers/medspray/styptic(src)
-	new /obj/item/reagent_containers/medspray/silver_sulf(src)
+	new /obj/item/stack/medical/mesh/advanced(src)
+	new /obj/item/stack/medical/suture/medicated(src)
 	new /obj/item/healthanalyzer/advanced(src)
 	new /obj/item/reagent_containers/syringe/lethal/choral(src) // what the fuck does anyone use this piece of shit for
 	new /obj/item/clothing/glasses/hud/health/night/syndicate(src)
@@ -223,6 +227,8 @@
 /obj/item/storage/pill_bottle/ComponentInitialize()
 	. = ..()
 	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
+	//STR.storage_flags = STORAGE_FLAGS_VOLUME_DEFAULT //Skyrat change
+	//STR.max_volume = STORAGE_VOLUME_PILL_BOTTLE //Skyrat change
 	STR.allow_quick_gather = TRUE
 	STR.click_gather = TRUE
 	STR.can_hold = typecacheof(list(/obj/item/reagent_containers/pill, /obj/item/dice))
@@ -244,7 +250,7 @@
 	desc = "Contains pills used to counter radiation poisoning."
 
 /obj/item/storage/pill_bottle/anitrad/PopulateContents()
-	for(var/i in 1 to 5)
+	for(var/i in 1 to 4)
 		new /obj/item/reagent_containers/pill/antirad(src)
 
 /obj/item/storage/pill_bottle/epinephrine
@@ -276,7 +282,7 @@
 	desc = "Guaranteed to give you that extra burst of energy during a long shift!"
 
 /obj/item/storage/pill_bottle/stimulant/PopulateContents()
-	for(var/i in 1 to 5)
+	for(var/i in 1 to 4)
 		new /obj/item/reagent_containers/pill/stimulant(src)
 
 /obj/item/storage/pill_bottle/mining
@@ -368,12 +374,20 @@
 	for(var/i in 1 to 7)
 		new /obj/item/reagent_containers/pill/breast_enlargement(src)
 
+/obj/item/storage/pill_bottle/neurine
+	name = "bottle of neurine pills"
+	desc = "Contains pills to treat non-severe mental traumas."
+
+/obj/item/storage/pill_bottle/neurine/PopulateContents()
+	for(var/i in 1 to 5)
+		new /obj/item/reagent_containers/pill/neurine(src)
+
 /////////////
 //Organ Box//
 /////////////
 
 /obj/item/storage/belt/organbox
-	name = "Organ Storge"
+	name = "Organ Storage"
 	desc = "A compact box that helps hold massive amounts of implants, organs, and some tools. Has a belt clip for easy carrying"
 	w_class = WEIGHT_CLASS_BULKY
 	icon = 'icons/obj/mysterybox.dmi'
@@ -392,6 +406,12 @@
 	STR.can_hold = typecacheof(list(
 	/obj/item/storage/pill_bottle,
 	/obj/item/reagent_containers/hypospray,
+	/obj/item/pinpointer/crew,
+	/obj/item/tele_iv,
+	/obj/item/sequence_scanner,
+	/obj/item/sensor_device,
+	/obj/item/bodybag,
+	/obj/item/surgicaldrill/advanced,
 	/obj/item/healthanalyzer,
 	/obj/item/reagent_containers/syringe,
 	/obj/item/clothing/glasses/hud/health,
@@ -407,8 +427,11 @@
 	/obj/item/implantcase,
 	/obj/item/implanter,
 	/obj/item/circuitboard/computer/operating,
+	/obj/item/circuitboard/computer/crew,
+	/obj/item/stack/sheet/glass,
 	/obj/item/stack/sheet/mineral/silver,
-	/obj/item/organ_storage
+	/obj/item/organ_storage,
+	/obj/item/reagent_containers/chem_pack
 	))
 
 //hijacking the minature first aids for hypospray boxes. <3
@@ -422,6 +445,8 @@
 	throw_range = 7
 	var/empty = FALSE
 	item_state = "firstaid"
+	custom_price = PRICE_ABOVE_NORMAL
+	custom_premium_price = PRICE_EXPENSIVE
 
 /obj/item/storage/hypospraykit/ComponentInitialize()
 	. = ..()
@@ -541,3 +566,17 @@
 /obj/item/storage/box/vials/PopulateContents()
 	for(var/i in 1 to 7)
 		new /obj/item/reagent_containers/glass/bottle/vial/small( src )
+
+//skyrat edit
+/obj/item/storage/firstaid/emergency
+	icon_state = "medbriefcase"
+	name = "emergency first-aid kit"
+	desc = "A very simple first aid kit meant to secure and stabilize serious wounds for later treatment."
+
+/obj/item/storage/firstaid/emergency/PopulateContents()
+	new /obj/item/healthanalyzer/wound(src)
+	new /obj/item/stack/medical/gauze(src)
+	new /obj/item/stack/medical/suture/emergency(src)
+	new /obj/item/stack/medical/ointment(src)
+	new /obj/item/reagent_containers/hypospray/medipen/ekit(src)
+	new /obj/item/storage/pill_bottle/mining(src)

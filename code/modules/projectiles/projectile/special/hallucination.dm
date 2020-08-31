@@ -20,6 +20,7 @@
 	var/hal_impact_effect_wall
 	var/hit_duration
 	var/hit_duration_wall
+	wound_bonus = CANT_WOUND
 
 /obj/item/projectile/hallucination/fire()
 	..()
@@ -50,7 +51,7 @@
 	if(M == hal_target)
 		to_chat(hal_target, "<span class='userdanger'>[M] is hit by \a [src] in the chest!</span>")
 		hal_apply_effect()
-	else if(M in view(hal_target))
+	else if(M in hal_target.fov_view())
 		to_chat(hal_target, "<span class='danger'>[M] is hit by \a [src] in the chest!!</span>")
 	if(damage_type == BRUTE)
 		var/splatter_dir = dir

@@ -64,7 +64,8 @@
 #define INIT_ORDER_TICKER			55
 #define INIT_ORDER_INSTRUMENTS		53
 #define INIT_ORDER_MAPPING			50
-#define INIT_ORDER_NETWORKS			45
+#define INIT_ORDER_ECONOMY			45
+#define INIT_ORDER_NETWORKS			40
 #define INIT_ORDER_HOLODECK			35
 #define INIT_ORDER_ATOMS			30
 #define INIT_ORDER_LANGUAGE			25
@@ -116,6 +117,7 @@
 #define FIRE_PRIORITY_NPC			80
 #define FIRE_PRIORITY_MOBS			100
 #define FIRE_PRIORITY_TGUI			110
+#define FIRE_PRIORITY_PROJECTILES	200
 #define FIRE_PRIORITY_TICKER		200
 #define FIRE_PRIORITY_ATMOS_ADJACENCY	300
 #define FIRE_PRIORITY_CHAT			400
@@ -132,8 +134,15 @@
 
 #define RUNLEVELS_DEFAULT (RUNLEVEL_SETUP | RUNLEVEL_GAME | RUNLEVEL_POSTGAME)
 
-
-
+// SSair run section
+#define SSAIR_PIPENETS 1
+#define SSAIR_ATMOSMACHINERY 2
+#define SSAIR_REACTQUEUE 3
+#define SSAIR_EXCITEDGROUPS 4
+#define SSAIR_HIGHPRESSURE 5
+#define SSAIR_HOTSPOTS 6
+#define SSAIR_SUPERCONDUCTIVITY 7
+#define SSAIR_REBUILD_PIPENETS 8
 
 #define COMPILE_OVERLAYS(A)\
 	if (TRUE) {\
@@ -142,14 +151,17 @@
 		var/list/po = A.priority_overlays;\
 		if(LAZYLEN(rm)){\
 			A.overlays -= rm;\
-			rm.Cut();\
+			A.remove_overlays = null;\
 		}\
 		if(LAZYLEN(ad)){\
 			A.overlays |= ad;\
-			ad.Cut();\
+			A.add_overlays = null;\
 		}\
 		if(LAZYLEN(po)){\
 			A.overlays |= po;\
+		}\
+		else{\
+			A.priority_overlays = null;\
 		}\
 		A.flags_1 &= ~OVERLAY_QUEUED_1;\
 	}

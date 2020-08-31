@@ -22,7 +22,7 @@
 	icon_state = "cmoturtle"
 	item_state = "w_suit"
 	alt_covers_chest = TRUE
-	mutantrace_variation = NONE
+	mutantrace_variation = STYLE_DIGITIGRADE|USE_TAUR_CLIP_MASK
 
 /obj/item/clothing/under/rank/medical/geneticist
 	desc = "It's made of a special fiber that gives special protection against biohazards. It has a genetics rank stripe on it."
@@ -85,12 +85,10 @@
 	item_state = "w_suit"
 	permeability_coefficient = 0.5
 	armor = list("melee" = 0, "bullet" = 0, "laser" = 0,"energy" = 0, "bomb" = 0, "bio" = 10, "rad" = 0, "fire" = 0, "acid" = 0)
-	can_adjust = FALSE
 
 /obj/item/clothing/under/rank/medical/paramedic/light
 	desc = "It's made of a special fiber that provides minor protection against biohazards. It has a dark blue cross on the chest denoting that the wearer is a trained paramedic."
 	icon_state = "paramedic-light"
-	can_adjust = TRUE
 
 /obj/item/clothing/under/rank/medical/paramedic/skirt
 	name = "paramedic jumpskirt"
@@ -153,3 +151,21 @@
 	can_adjust = FALSE
 	fitted = FEMALE_UNIFORM_TOP
 	mutantrace_variation = STYLE_DIGITIGRADE|STYLE_NO_ANTHRO_ICON
+
+//Skyrat changes start    // All WIP aaaa
+/obj/item/clothing/under/rank/medical/psychologist
+	name = "psychologist's suit"
+	desc = "A profesional looking suit, fitting of a psychologist, it seems oddly famliar."			//New sprite plz
+	icon_state = "red_suit"									//No custom sprite atm
+	item_state = "red_suit"
+	can_adjust = FALSE
+
+/obj/item/clothing/under/rank/medical/psychologist/skirt
+	name = "psychologist's suitskirt"
+	desc = "A profesional looking suitskirt, fitting of a psychologist, it seems oddly famliar."	//New sprite plz
+	icon_state = "red_suit_skirt"							//No custom sprite atm
+	item_state = "red_suit"
+	body_parts_covered = CHEST|GROIN|ARMS
+	fitted = FEMALE_UNIFORM_TOP
+	mutantrace_variation = STYLE_DIGITIGRADE|STYLE_NO_ANTHRO_ICON
+//Skyrat changes stop

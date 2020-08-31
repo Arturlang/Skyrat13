@@ -171,26 +171,29 @@
 	return !held_items[hand_index]
 
 /mob/proc/put_in_hand(obj/item/I, hand_index, forced = FALSE, ignore_anim = TRUE)
-	if(forced || can_put_in_hand(I, hand_index))
-		if(isturf(I.loc) && !ignore_anim)
-			I.do_pickup_animation(src)
-		if(hand_index == null)
-			return FALSE
-		if(get_item_for_held_index(hand_index) != null)
-			dropItemToGround(get_item_for_held_index(hand_index), force = TRUE)
-		I.forceMove(src)
-		held_items[hand_index] = I
-		I.layer = ABOVE_HUD_LAYER
-		I.plane = ABOVE_HUD_PLANE
-		I.equipped(src, SLOT_HANDS)
-		if(I.pulledby)
-			I.pulledby.stop_pulling()
-		update_inv_hands()
-		I.pixel_x = initial(I.pixel_x)
-		I.pixel_y = initial(I.pixel_y)
-		I.transform = initial(I.transform)
-		return hand_index || TRUE
-	return FALSE
+	if(!forced && !can_put_in_hand(I, hand_index) || hand_index == null)
+		return FALSE
+	if(isturf(I.loc) && !ignore_anim)
+		I.do_pickup_animation(src)
+	if(hand_index == null)
+		return FALSE
+	if(get_item_for_held_index(hand_index) != null)
+		dropItemToGround(get_item_for_held_index(hand_index), force = TRUE)
+	I.forceMove(src)
+	held_items[hand_index] = I
+	I.layer = ABOVE_HUD_LAYER
+	I.plane = ABOVE_HUD_PLANE
+	I.equipped(src, SLOT_HANDS)
+	if(QDELETED(I)) // this is here because some ABSTRACT items like slappers and circle hands could be moved from hand to hand then delete, which meant you'd have a null in your hand until you cleared it (say, by dropping it)
+		held_items[hand_index] = null
+		return FALSE
+	if(I.pulledby)
+		I.pulledby.stop_pulling()
+	update_inv_hands()
+	I.pixel_x = initial(I.pixel_x)
+	I.pixel_y = initial(I.pixel_y)
+	I.transform = initial(I.transform)
+	return hand_index || TRUE
 
 //Puts the item into the first available left hand if possible and calls all necessary triggers/updates. returns 1 on success.
 /mob/proc/put_in_l_hand(obj/item/I)
@@ -294,29 +297,40 @@
 
 //for when you want the item to end up on the ground
 //will force move the item to the ground and call the turf's Entered
-/mob/proc/dropItemToGround(obj/item/I, force = FALSE)
-	return doUnEquip(I, force, drop_location(), FALSE)
+/mob/proc/dropItemToGround(obj/item/I, force = FALSE, ignore_strip_self = TRUE) //skyrat edit
+	return doUnEquip(I, force, drop_location(), FALSE, ignore_strip_self)
 
 //for when the item will be immediately placed in a loc other than the ground
-/mob/proc/transferItemToLoc(obj/item/I, newloc = null, force = FALSE)
-	return doUnEquip(I, force, newloc, FALSE)
+/mob/proc/transferItemToLoc(obj/item/I, newloc = null, force = FALSE, ignore_strip_self = TRUE) //skyrat edit
+	return doUnEquip(I, force, newloc, FALSE, ignore_strip_self)
 
 //visibly unequips I but it is NOT MOVED AND REMAINS IN SRC
 //item MUST BE FORCEMOVE'D OR QDEL'D
-/mob/proc/temporarilyRemoveItemFromInventory(obj/item/I, force = FALSE, idrop = TRUE)
-	return doUnEquip(I, force, null, TRUE, idrop)
+/mob/proc/temporarilyRemoveItemFromInventory(obj/item/I, force = FALSE, idrop = TRUE, ignore_strip_self = TRUE) //skyrat edit
+	return doUnEquip(I, force, null, TRUE, idrop, ignore_strip_self) //skyrat edit
 
 //DO NOT CALL THIS PROC
 //use one of the above 3 helper procs
 //you may override it, but do not modify the args
-/mob/proc/doUnEquip(obj/item/I, force, newloc, no_move, invdrop = TRUE) //Force overrides TRAIT_NODROP for things like wizarditis and admin undress.
+//SKYRAT EDIT BELOW. ignore_strip_self to just completely ignore the self strip delay.
+/mob/proc/doUnEquip(obj/item/I, force, newloc, no_move, invdrop = TRUE, ignore_strip_self = TRUE) //Force overrides TRAIT_NODROP for things like wizarditis and admin undress.
 													//Use no_move if the item is just gonna be immediately moved afterward
 													//Invdrop is used to prevent stuff in pockets dropping. only set to false if it's going to immediately be replaced
 	if(!I) //If there's nothing to drop, the drop is automatically succesfull. If(unEquip) should generally be used to check for TRAIT_NODROP.
 		return TRUE
-
+	
 	if(HAS_TRAIT(I, TRAIT_NODROP) && !force)
 		return FALSE
+		
+	//skyrat change - unequip delays
+	if(!ignore_strip_self)
+		if((I.item_flags & IN_INVENTORY) && I.strip_self_delay && ishuman(src))
+			var/mob/living/carbon/human/H = src
+			if(!(I in H.held_items))
+				H.visible_message("<span class='notice'>[H] starts stripping [I]...</span>", "<span class='notice'>You start stripping [I]...</span>")
+				if(!do_after(H, I.strip_self_delay, TRUE, H))
+					return FALSE
+	//
 
 	var/hand_index = get_held_index_of_item(I)
 	if(hand_index)
@@ -333,6 +347,7 @@
 				I.moveToNullspace()
 			else
 				I.forceMove(newloc)
+		on_item_dropped(I)
 		if(I.dropped(src) == ITEM_RELOCATED_BY_DROPPED)
 			return FALSE
 	return TRUE

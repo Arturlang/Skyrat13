@@ -18,6 +18,10 @@
 	var/stability = 100
 	var/scrambled = FALSE //Did we take something like mutagen? In that case we cant get our genes scanned to instantly cheese all the powers.
 	var/skin_tone_override //because custom skin tones are not found in the skin_tones global list.
+	//SKYRAT CHANGE
+	var/blood_color = ""
+	var/monkey_aspect = FALSE //Cannot be absorbed by changelings, is "simple minded"
+	//
 
 /datum/dna/New(mob/living/new_holder)
 	if(istype(new_holder))
@@ -47,12 +51,15 @@
 	destination.dna.uni_identity = uni_identity
 	destination.dna.blood_type = blood_type
 	destination.dna.skin_tone_override = skin_tone_override
-	destination.set_species(species.type, icon_update=0)
 	destination.dna.features = features.Copy()
+	destination.set_species(species.type, icon_update=0)
 	destination.dna.real_name = real_name
 	destination.dna.nameless = nameless
 	destination.dna.custom_species = custom_species
 	destination.dna.temporary_mutations = temporary_mutations.Copy()
+	//SKYRAT CHANGE - Blood color
+	destination.dna.blood_color = blood_color
+	//
 	if(ishuman(destination))
 		var/mob/living/carbon/human/H = destination
 		H.give_genitals(TRUE)//This gives the body the genitals of this DNA. Used for any transformations based on DNA
@@ -75,6 +82,9 @@
 	new_dna.nameless = nameless
 	new_dna.custom_species = custom_species
 	new_dna.mutations = mutations.Copy()
+	//SKYRAT CHANGE - Blood color
+	new_dna.blood_color = blood_color
+	//
 
 //See mutation.dm for what 'class' does. 'time' is time till it removes itself in decimals. 0 for no timer
 /datum/dna/proc/add_mutation(mutation, class = MUT_OTHER, time)
@@ -152,10 +162,11 @@
 	return .
 
 /datum/dna/proc/generate_dna_blocks()
-	var/bonus
+	var/list/mutations_temp = GLOB.good_mutations + GLOB.bad_mutations + GLOB.not_good_mutations
 	if(species && species.inert_mutation)
-		bonus = GET_INITIALIZED_MUTATION(species.inert_mutation)
-	var/list/mutations_temp = GLOB.good_mutations + GLOB.bad_mutations + GLOB.not_good_mutations + bonus
+		var/bonus = GET_INITIALIZED_MUTATION(species.inert_mutation)
+		if(bonus)
+			mutations_temp += bonus
 	if(!LAZYLEN(mutations_temp))
 		return
 	mutation_index.Cut()
@@ -245,6 +256,17 @@
 			construct_block(GLOB.mam_body_markings_list.Find(features["mam_body_markings"]), GLOB.mam_body_markings_list.len)
 		if(DNA_TAUR_BLOCK)
 			construct_block(GLOB.taur_list.Find(features["taur"]), GLOB.taur_list.len)
+			if(species.mutant_bodyparts["taur"] && ishuman(holder))
+				var/datum/sprite_accessory/taur/T = GLOB.taur_list[features["taur"]]
+				switch(T?.taur_mode)
+					if(STYLE_HOOF_TAURIC)
+						H.physiology.footstep_type = FOOTSTEP_MOB_SHOE
+					if(STYLE_PAW_TAURIC)
+						H.physiology.footstep_type = FOOTSTEP_MOB_CLAW
+					if(STYLE_SNEK_TAURIC)
+						H.physiology.footstep_type = FOOTSTEP_MOB_CRAWL
+					else
+						H.physiology.footstep_type = null
 
 //Please use add_mutation or activate_mutation instead
 /datum/dna/proc/force_give(datum/mutation/human/HM)
@@ -355,6 +377,11 @@
 		var/datum/species/old_species = dna.species
 		dna.species = new_race
 		dna.species.on_species_gain(src, old_species, pref_load)
+		if(ishuman(src))
+			qdel(language_holder)
+			var/species_holder = initial(mrace.species_language_holder)
+			language_holder = new species_holder(src)
+		update_atom_languages()
 
 /mob/living/carbon/human/set_species(datum/species/mrace, icon_update = TRUE, pref_load = FALSE)
 	..()
@@ -374,16 +401,6 @@
 
 /mob/living/carbon/human/proc/hardset_dna(ui, list/mutation_index, newreal_name, newblood_type, datum/species/mrace, newfeatures)
 
-	if(newfeatures)
-		var/old_size = dna.features["body_size"]
-		dna.features = newfeatures
-		dna.update_body_size(old_size)
-
-	if(mrace)
-		var/datum/species/newrace = new mrace.type
-		newrace.copy_properties_from(mrace)
-		set_species(newrace, icon_update=0)
-
 	if(newreal_name)
 		real_name = newreal_name
 		dna.generate_unique_enzymes()
@@ -393,7 +410,17 @@
 
 	if(ui)
 		dna.uni_identity = ui
-		updateappearance(icon_update=0)
+		updateappearance(icon_update=FALSE)
+
+	if(newfeatures)
+		var/old_size = dna.features["body_size"]
+		dna.features = newfeatures
+		dna.update_body_size(old_size)
+
+	if(mrace)
+		var/datum/species/newrace = new mrace.type
+		newrace.copy_properties_from(mrace)
+		set_species(newrace, icon_update=FALSE)
 
 	if(LAZYLEN(mutation_index))
 		dna.mutation_index = mutation_index.Copy()
@@ -534,13 +561,13 @@
 		return TRUE
 
 /mob/living/carbon/proc/randmut(list/candidates, difficulty = 2)
-	if(!has_dna())
+	if(!has_dna() || !can_mutate()) //Skyrat edit
 		return
 	var/mutation = pick(candidates)
 	. = dna.add_mutation(mutation)
 
 /mob/living/carbon/proc/easy_randmut(quality = POSITIVE + NEGATIVE + MINOR_NEGATIVE, scrambled = TRUE, sequence = TRUE, exclude_monkey = TRUE)
-	if(!has_dna())
+	if(!has_dna() || !can_mutate()) //Skyrat edit
 		return
 	var/list/mutations = list()
 	if(quality & POSITIVE)
@@ -566,7 +593,7 @@
 
 
 /mob/living/carbon/proc/randmuti()
-	if(!has_dna())
+	if(!has_dna() || !can_mutate()) //Skyrat edit
 		return
 	var/num = rand(1, DNA_UNI_IDENTITY_BLOCKS)
 	var/newdna = setblock(dna.uni_identity, num, random_string(DNA_BLOCK_SIZE, GLOB.hex_characters))
@@ -661,7 +688,7 @@
 	holder.update_transform()
 	var/danger = CONFIG_GET(number/threshold_body_size_slowdown)
 	if(features["body_size"] < danger)
-		var/slowdown = 1 + round(danger/features["body_size"], 0.1) * CONFIG_GET(number/body_size_slowdown_multiplier)
+		var/slowdown = (1 - round(features["body_size"] / danger, 0.1)) * CONFIG_GET(number/body_size_slowdown_multiplier)
 		holder.add_or_update_variable_movespeed_modifier(/datum/movespeed_modifier/small_stride, TRUE, slowdown)
 	else if(old_size < danger)
 		holder.remove_movespeed_modifier(/datum/movespeed_modifier/small_stride)

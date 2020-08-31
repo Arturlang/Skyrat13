@@ -6,11 +6,18 @@
 				/datum/surgery_step/close)
 
 	target_mobtypes = list(/mob/living/carbon/human, /mob/living/carbon/monkey)
-	possible_locs = list(BODY_ZONE_CHEST)
-	requires_bodypart_type = 0
+	possible_locs = TORSO_BODYPARTS //skyrat edits
+	requires_bodypart_type = BODYPART_ORGANIC //Skyrat change
+
+//skyrat change start
+/datum/surgery/embalming/can_start(mob/user, mob/living/target, obj/item/tool)
+  . = ..()
+  if(target.stat != DEAD)
+    return FALSE
+//skyrat change stop
 
 /datum/surgery_step/embalming
-	name = "embalming body"
+	name = "Embalming body"
 	implements = list(TOOL_HEMOSTAT = 100, TOOL_SCREWDRIVER = 35)
 	chems_needed = list(/datum/reagent/drying_agent, /datum/reagent/space_cleaner/sterilizine)
 	require_all_chems = FALSE

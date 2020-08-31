@@ -24,6 +24,8 @@ SUBSYSTEM_DEF(persistence)
 	var/list/saved_votes = list()
 	var/list/obj/structure/sign/picture_frame/photo_frames
 	var/list/obj/item/storage/photo_album/photo_albums
+	var/list/obj/structure/sign/painting/painting_frames = list()
+	var/list/paintings = list()
 
 /datum/controller/subsystem/persistence/Initialize()
 	LoadSatchels()
@@ -265,6 +267,10 @@ SUBSYSTEM_DEF(persistence)
 		CollectAntagReputation()
 	SaveRandomizedRecipes()
 	SavePanicBunker()
+	SavePaintings()
+	//skyrat edit
+	SaveScars()
+	//
 
 /datum/controller/subsystem/persistence/proc/LoadPanicBunker()
 	var/bunker_path = file("data/bunker_passthrough.json")
@@ -528,3 +534,42 @@ SUBSYSTEM_DEF(persistence)
 		file_data["data"] = saved_votes[ckey]
 		fdel(json_file)
 		WRITE_FILE(json_file, json_encode(file_data))
+
+/datum/controller/subsystem/persistence/proc/LoadPaintings()
+	var/json_file = file("data/paintings.json")
+	if(fexists(json_file))
+		paintings = json_decode(file2text(json_file))
+
+	for(var/obj/structure/sign/painting/P in painting_frames)
+		P.load_persistent()
+
+/datum/controller/subsystem/persistence/proc/SavePaintings()
+	for(var/obj/structure/sign/painting/P in painting_frames)
+		P.save_persistent()
+
+	var/json_file = file("data/paintings.json")
+	fdel(json_file)
+	WRITE_FILE(json_file, json_encode(paintings))
+
+//skyrat persistence
+/datum/controller/subsystem/persistence/proc/SaveScars()
+	for(var/i in GLOB.joined_player_list)
+		var/mob/living/carbon/human/ending_human = get_mob_by_ckey(i)
+		if(!istype(ending_human) || !ending_human.mind || !ending_human.client || !ending_human.client.prefs || !ending_human.client.prefs.persistent_scars)
+			continue
+
+		var/mob/living/carbon/human/original_human = ending_human.mind.original_character
+		if(!original_human || original_human.stat == DEAD || !original_human.all_scars || !(original_human == ending_human))
+			if(ending_human.client) // i was told if i don't check this every step of the way byond might decide a client ceases to exist mid proc so here we go
+				ending_human.client.prefs.scars_list["[ending_human.client.prefs.scars_index]"] = ""
+		else
+			for(var/k in ending_human.all_wounds)
+				var/datum/wound/W = k
+				if(istype(W))
+					W.remove_wound() // so we can get the scars for open wounds
+			if(!ending_human.client)
+				return
+			ending_human.client.prefs.scars_list["[ending_human.client.prefs.scars_index]"] = ending_human.format_scars()
+		if(!ending_human.client)
+			return
+		ending_human.client.prefs.save_character()

@@ -463,7 +463,7 @@
 /turf/open/floor/plating,
 /area/mine/laborcamp/security)
 "hf" = (
-/obj/item/twohanded/required/kirbyplants/random,
+/obj/item/kirbyplants/random,
 /turf/open/floor/plasteel,
 /area/mine/living_quarters)
 "hm" = (
@@ -828,6 +828,9 @@
 	},
 /obj/effect/turf_decal/loading_area{
 	dir = 8
+	},
+/obj/machinery/atm{
+	pixel_y = 30
 	},
 /turf/open/floor/plasteel,
 /area/mine/production)
@@ -1377,6 +1380,18 @@
 /obj/effect/turf_decal/loading_area,
 /turf/open/floor/plasteel,
 /area/mine/production)
+"sC" = (
+/obj/effect/turf_decal/tile/brown{
+	dir = 4
+	},
+/obj/effect/turf_decal/tile/brown{
+	dir = 1
+	},
+/obj/machinery/atm{
+	pixel_y = 30
+	},
+/turf/open/floor/plasteel,
+/area/mine/eva)
 "sE" = (
 /obj/structure/closet/crate,
 /obj/effect/turf_decal/tile/purple,
@@ -1818,7 +1833,7 @@
 /turf/open/floor/plating,
 /area/mine/laborcamp)
 "zy" = (
-/obj/item/twohanded/required/kirbyplants/random,
+/obj/item/kirbyplants/random,
 /obj/effect/turf_decal/tile/brown{
 	dir = 1
 	},
@@ -2200,6 +2215,12 @@
 	},
 /turf/open/floor/plating,
 /area/mine/laborcamp/security)
+"DM" = (
+/obj/machinery/atm{
+	pixel_y = 30
+	},
+/turf/open/floor/plasteel,
+/area/mine/living_quarters)
 "DN" = (
 /obj/machinery/computer/shuttle/mining/common{
 	dir = 4
@@ -2406,27 +2427,6 @@
 	},
 /turf/open/floor/plating,
 /area/mine/laborcamp)
-"Hk" = (
-/obj/docking_port/stationary{
-	area_type = /area/lavaland/surface/outdoors;
-	dir = 8;
-	dwidth = 3;
-	height = 7;
-	id = "lavaland_common_away";
-	name = "Mining base public dock";
-	width = 7
-	},
-/turf/open/floor/plating/asteroid/basalt/lava_land_surface,
-/area/lavaland/surface/outdoors)
-"Hm" = (
-/obj/effect/mapping_helpers/airlock/cyclelink_helper{
-	dir = 8
-	},
-/obj/machinery/door/airlock/external{
-	name = "Lavaland Shuttle Airlock"
-	},
-/turf/open/floor/plasteel,
-/area/mine/living_quarters)
 "Ho" = (
 /obj/machinery/door/airlock{
 	name = "Restroom"
@@ -2989,29 +2989,6 @@
 /turf/open/floor/plasteel,
 /area/mine/production)
 "MF" = (
-/obj/structure/closet/crate/freezer,
-/obj/item/reagent_containers/blood,
-/obj/item/reagent_containers/blood{
-	pixel_x = -3;
-	pixel_y = -3
-	},
-/obj/item/reagent_containers/blood/AMinus,
-/obj/item/reagent_containers/blood/BMinus{
-	pixel_x = -4;
-	pixel_y = 4
-	},
-/obj/item/reagent_containers/blood/BPlus{
-	pixel_x = 1;
-	pixel_y = 2
-	},
-/obj/item/reagent_containers/blood/OMinus,
-/obj/item/reagent_containers/blood/OPlus{
-	pixel_x = -2;
-	pixel_y = -1
-	},
-/obj/item/reagent_containers/blood/random,
-/obj/item/reagent_containers/blood/random,
-/obj/item/reagent_containers/blood/random,
 /obj/machinery/camera{
 	c_tag = "Sleeper Room";
 	dir = 1;
@@ -3833,6 +3810,16 @@
 /obj/machinery/atmospherics/components/unary/vent_pump/on,
 /turf/open/floor/plasteel/dark,
 /area/mine/maintenance)
+"WQ" = (
+/obj/effect/turf_decal/tile/brown,
+/obj/effect/turf_decal/tile/brown{
+	dir = 4
+	},
+/obj/machinery/atm{
+	pixel_x = 30
+	},
+/turf/open/floor/plasteel,
+/area/mine/production)
 "WU" = (
 /obj/effect/turf_decal/tile/brown{
 	dir = 4
@@ -4068,15 +4055,6 @@
 	network = list("mine")
 	},
 /obj/machinery/atmospherics/components/unary/vent_scrubber/on/layer3,
-/turf/open/floor/plasteel,
-/area/mine/living_quarters)
-"Zw" = (
-/obj/effect/mapping_helpers/airlock/cyclelink_helper{
-	dir = 4
-	},
-/obj/machinery/door/airlock/external{
-	name = "Lavaland Shuttle Airlock"
-	},
 /turf/open/floor/plasteel,
 /area/mine/living_quarters)
 "ZC" = (
@@ -5482,7 +5460,7 @@ Lm
 Lm
 Lm
 Lm
-Hk
+Lm
 Lm
 Lm
 Lm
@@ -5538,9 +5516,9 @@ Lm
 Lm
 Lm
 Lm
-KV
-Zw
-KV
+Lm
+Lm
+Lm
 Lm
 Lm
 Lm
@@ -5595,9 +5573,9 @@ Lm
 Lm
 Lm
 Lm
-KV
-Ag
-KV
+Lm
+Lm
+Lm
 Lm
 Lm
 VT
@@ -5652,9 +5630,9 @@ VN
 VN
 XX
 VN
-KV
-Hm
-KV
+VN
+VN
+VN
 VT
 VT
 VT
@@ -6100,7 +6078,7 @@ VN
 HY
 MF
 VN
-Ag
+DM
 JH
 cr
 VN
@@ -7575,7 +7553,7 @@ Ed
 eL
 PO
 Aj
-zN
+WQ
 Sq
 qH
 Aj
@@ -7906,7 +7884,7 @@ MD
 MD
 MD
 bg
-tq
+sC
 SY
 hK
 SY
