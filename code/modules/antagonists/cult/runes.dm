@@ -178,8 +178,8 @@ structure_check() searches for nearby cultist structures required for the invoca
 
 //Rite of Offering: Converts or sacrifices a target.
 /obj/effect/rune/convert
-	cultist_name = "Offer"
-	cultist_desc = "offers a noncultist above it to Nar'Sie, either converting them or sacrificing them."
+	cultist_name = "Convert"
+	cultist_desc = "Converts a normal crewmember on top of it to the cult. Does not work on mindshield-implanted crew."
 	req_cultists_text = "2 for conversion, 3 for living sacrifices and sacrifice targets."
 	invocation = "Mah'weyh pleggh at e'ntrath."
 	icon_state = "3"
@@ -191,7 +191,7 @@ structure_check() searches for nearby cultist structures required for the invoca
 /obj/effect/rune/convert/do_invoke_glow()
 	return
 
-/obj/effect/rune/convert/invoke(var/list/invokers)
+/obj/effect/rune/convert/invoke(list/invokers)
 	if(rune_in_use)
 		return
 	var/list/myriad_targets = list()
@@ -225,9 +225,12 @@ structure_check() searches for nearby cultist structures required for the invoca
 		else if(is_convertable)
 			do_convert(L, invokers)
 	else
+		for(var/M in invokers)
+			to_chat(M, "<span class='warning'>You cant convert this one, you need a sacrifical altar.</span>")
 		invocation = "Barhah hra zar'garis."
 		..()
-		do_sacrifice(L, invokers)
+		
+		//do_sacrifice(L, invokers)
 	animate(src, color = oldcolor, time = 5)
 	addtimer(CALLBACK(src, /atom/proc/update_atom_colour), 5)
 	Cult_team.check_size() // Triggers the eye glow or aura effects if the cult has grown large enough relative to the crew
