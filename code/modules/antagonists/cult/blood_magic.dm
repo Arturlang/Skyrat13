@@ -837,6 +837,8 @@
 						qdel(rite)
 
 /mob/living/simple_animal/shade/proc/give_blade_powers()
+	return
+/*
 	if(!istype(loc, /obj/item/melee/cultblade/cultblade))
 		return
 	if(client)
@@ -863,7 +865,10 @@
 		C.logo_state = "shade-blade"
 
 //Removing the spells, this should always fire when the shade gets removed from the blade, such as when it gets destroyed
+*/
 /mob/living/simple_animal/shade/proc/remove_blade_powers()
+	return
+/*
 	if(client)
 		client.screen -= list(
 			gui_icons.soulblade_bgLEFT,
@@ -1190,3 +1195,4 @@
 		var/mob/living/carbon/C = wielder
 		C.take_blood(null,50)
 		to_chat(user, "<span class='warning'>You steal a good amount of their blood, that'll show them.</span>")
+*/

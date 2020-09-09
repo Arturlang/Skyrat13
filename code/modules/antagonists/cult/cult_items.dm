@@ -57,6 +57,7 @@
 	throwforce = 10
 	hitsound = 'sound/weapons/bladeslice.ogg'
 	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "rended")
+	var/obj/item/soulstone/soulstone
 
 /obj/item/melee/cultblade/Initialize()
 	. = ..()
@@ -65,10 +66,7 @@
 
 /obj/item/melee/cultblade/attack(mob/living/target, mob/living/carbon/human/user)
 	if(!iscultist(user))
-		user.DefaultCombatKnockdown(100)
-		user.dropItemToGround(src, TRUE)
-		user.visible_message("<span class='warning'>A powerful force shoves [user] away from [target]!</span>", \
-							 "<span class='cultlarge'>\"You shouldn't play with sharp things. You'll poke someone's eye out.\"</span>")
+		punish_user(user, target)
 		if(ishuman(user))
 			var/mob/living/carbon/human/H = user
 			H.apply_damage(rand(force/2, force), BRUTE, pick(BODY_ZONE_L_ARM, BODY_ZONE_R_ARM))
@@ -77,8 +75,46 @@
 		return
 	..()
 
-///////////////////////////////////////CULT BLADE////////////////////////////////////////////////
+/obj/item/melee/cultblade/proc/punish_user(target, victim)
+	var/pushed_away_from = src
+	target.DefaultCombatKnockdown(100)
+	target.dropItemToGround(src, TRUE)
+	if(victim)
+		pushed_away_from = victim
+	target.visible_message("<span class='warning'>A powerful force shoves [target] away from [pushed_away_from]!</span>", \
+							"<span class='cultlarge'>\"You shouldn't play with sharp things. You'll poke someone's eye out.\"</span>")
 
+/obj/item/melee/cultblade/attackby(obj/item/I, mob/living/user, params)
+	if(iscultist(user))
+		punish_user(user)
+		return
+	if(istype(/obj/item/soulstone) && !soulstone)
+		to_chat(user, "<span class='notice'You insert the soul shard into the pommel of the sword.</span>")
+		soulstone = I
+		I.forceMove(src)
+		return
+	if(soulstone)
+		to_chat(user, "<span class='notice'There is no room for two soulstones in the sword.</span>")
+		return
+	. = ..()
+
+/obj/item/melee/cultblade/AltClick(mob/living/carbon/user)
+	if(!soulstone)
+		return
+	if(!iscultist(user))
+		punish_user(user)
+		return
+	if(user.get_empty_held_indexes())
+		user.put_in_hands(soulstone)
+		to_chat(user, "<span class='notice'You remove the soulstone from the sword's pommel.</span>")
+		soulstone = null
+		return
+	else
+		to_chat(user, "<span class='warning'You need a empty hand to remove the soulstone!</span>")
+	. = ..()
+		
+///////////////////////////////////////CULT BLADE////////////////////////////////////////////////
+/*
 /obj/item/melee/cultblade/cultblade
 	name = "cult blade"
 	icon = 'icons/obj/cult_64x64.dmi'
@@ -124,7 +160,7 @@
 	if(istype(I, /obj/item/paper))
 		fire_act(I)
 		return TRUE
-	if(istype(I, /obj/item/device/soulstone/gem))
+	if(istype(I, /obj/item/soulstone/gem))
 		if(user.get_inactive_held_item() != src)
 			to_chat(user,"<span class='warning'>You must hold \the [src] in your hand to properly place \the [I] in its socket.</span>")
 			return TRUE
@@ -145,7 +181,7 @@
 		qdel(I)
 		qdel(src)
 		return TRUE
-	if(istype(I,/obj/item/device/soulstone))
+	if(istype(I, /obj/item/soulstone))
 		to_chat(user,"<span class='warning'>\The [I] doesn't fit in \the [src]'s socket.</span>")
 		return TRUE
 	..()
@@ -161,7 +197,7 @@
 /obj/item/melee/cultblade/cultblade/nocult/attackby(obj/item/I, mob/user)
 	if(istype(I, /obj/item/paper))
 		return TRUE
-	if(istype(I, /obj/item/device/soulstone/gem))
+	if(istype(I, /obj/item/soulstone/gem))
 		to_chat(user,"<span class='warning'>The [src]'s damage doesn't allow it to hold \a [I] any longer.</span>")
 		return TRUE
 	..()
@@ -194,7 +230,7 @@
 		if(T)
 			shade.forceMove(T)
 			shade.status_flags &= ~GODMODE
-			shade.canmove = 1
+			shade.mobility_flags = MOBILITY_FLAGS_DEFAULT
 			shade.cancel_camera()
 			var/datum/control/C = shade.control_object[src]
 			if(C)
@@ -207,7 +243,7 @@
 		B.Move(get_step_rand(T))
 		if (fingerprints)
 			B.fingerprints = fingerprints.Copy()
-		new /obj/item/device/soulstone(T)
+		new /obj/item/soulstone(T)
 	shade = null
 	..()
 
@@ -243,7 +279,7 @@
 			playsound(T, 'sound/items/Deconstruct.ogg', 50, FALSE, -3)
 			user.dropItemToGround(src)
 			var/obj/item/melee/cultblade/cultblade/CB = new (T)
-			var/obj/item/device/soulstone/gem/SG = new (T)
+			var/obj/item/soulstone/gem/SG = new (T)
 			if(fingerprints)
 				CB.fingerprints = fingerprints.Copy()
 			user.put_in_active_hand(CB)
@@ -426,7 +462,7 @@
 	..()
 	takeDamage(P.damage)
 
-/obj/item/device/soulstone/gem
+/obj/item/soulstone/gem
 	name = "Soul Gem"
 	desc = "A freshly cut stone which appears to hold the same soul catching properties as shards of the Soul Stone. This one however is cut to perfection."
 	icon = 'icons/obj/cult.dmi'
@@ -435,9 +471,9 @@
 	lefthand_file = 'icons/mob/inhands/weapons/melee_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/weapons/melee_righthand.dmi'
 
-/obj/item/device/soulstone/gem/throw_impact(atom/hit_atom, speed, mob/user)
+/obj/item/soulstone/gem/throw_impact(atom/hit_atom, speed, mob/user)
 	..()
-	var/obj/item/device/soulstone/S = new(loc)
+	var/obj/item/soulstone/S = new(loc)
 	for(var/mob/living/simple_animal/shade/A in src)
 		A.forceMove(S)
 		S.icon_state = "soulstone2"
@@ -467,7 +503,7 @@
 			user.emote("scream")
 			user.apply_damage(30, BRUTE, pick(BODY_ZONE_L_ARM, BODY_ZONE_R_ARM))
 			user.dropItemToGround(src)
-
+*/
 /obj/item/twohanded/required/cult_bastard
 	name = "bloody bastard sword"
 	desc = "An enormous sword used by Nar'Sien cultists to rapidly harvest the souls of non-believers."

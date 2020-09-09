@@ -314,7 +314,7 @@
 	climbable = TRUE
 	obj_flags = CAN_BE_HIT|SHOVABLE_ONTO
 	pass_flags = LETPASSTHROW
-	var/obj/item/melee/cultblade/soulblade/blade = null
+	var/obj/item/melee/cultblade/blade
 	var/altar_task = ALTARTASK_NONE
 	var/gem_delay = 300
 
@@ -357,10 +357,10 @@
 	//holomap_markers -= HOLOMAP_MARKER_CULT_ALTAR+"_\ref[src]"
 	..()
 
-/obj/structure/cult/altar/attackby(var/obj/item/I, var/mob/user)
+/obj/structure/cult/altar/attackby(obj/item/I, mob/user)
 	if(altar_task)
 		return ..()
-	if(istype(I, /obj/item/melee/cultblade/soulblade) || (istype(I, /obj/item/melee/cultblade/cultblade) && !istype(I, /obj/item/melee/cultblade/cultblade/nocult)))
+	if(I.type == /obj/item/melee/cultblade)
 		if(blade)
 			to_chat(user,"<span class='warning'>You must remove \the [blade] planted into \the [src] first.</span>")
 			return TRUE
@@ -386,8 +386,8 @@
 				for(var/mob/dead/observer/O in GLOB.dead_mob_list)
 					if(!O.client || jobban_isbanned(O, ROLE_CULTIST) || O.client.is_afk())
 						continue
-					if(O?.mind && O.mind.has_antag_datum(/datum/antagonist/vgcultist))
-						var/datum/antagonist/vgcultist/cultist = O.mind.has_antag_datum(ANTAG_DATUM_CULTIST)
+					if(O?.mind && O.mind.has_antag_datum(/datum/antagonist/cult))
+						var/datum/antagonist/cult/cultist = O.mind.has_antag_datum(/datum/antagonist/cult)
 						if(cultist.second_chance)
 							to_chat(O, "[icon2base64html(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, opening a small crack in the veil that allows you to become the blade's resident shade. (<a href='?src=\ref[src];signup=\ref[O]'>Possess now!</a>)</span>[icon2base64html(logo_icon)]")
 		return TRUE
@@ -721,7 +721,7 @@
 					sleep (gem_delay/3)
 					altar_task = ALTARTASK_NONE
 					update_icon()
-					var/obj/item/device/soulstone/gem/gem = new (loc)
+					var/obj/item/soulstone/gem/gem = new (loc)
 					gem.pixel_y = 4
 
 /obj/structure/cult/altar/proc/replace_target(/mob/user)
