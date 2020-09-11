@@ -13,6 +13,7 @@
 
 	var/old_shard = FALSE
 	var/spent = FALSE
+	var/mob/living/shade //Pointer for the shade inside the soulstone. Only one fits, and the pointer is needed for the cult altar.
 
 /obj/item/soulstone/proc/was_used()
 	if(old_shard)
@@ -88,6 +89,7 @@
 		A.cancel_camera()
 		icon_state = "soulstone"
 		name = initial(name)
+		shade = null
 		if(iswizard(user) || usability)
 			to_chat(A, "<b>You have been released from your prison, but you are still bound to [user.real_name]'s will. Help [user.p_them()] succeed in [user.p_their()] goals at all costs.</b>")
 		else if(iscultist(user))
@@ -140,7 +142,7 @@
 				return TRUE
 			else
 				to_chat(user, "<span class='userdanger'>Capture failed!</span>: The soul has already fled its mortal frame. You attempt to bring it back...")
-				return getCultGhost(T,user)
+				return getCultGhost(T, user)
 
 		if("VICTIM")
 			var/mob/living/carbon/human/T = target
@@ -175,6 +177,7 @@
 				T.status_flags |= GODMODE
 				T.mobility_flags = NONE
 				T.health = T.maxHealth
+				shade = T
 				icon_state = "soulstone2"
 				name = "soulstone: Shade of [T.real_name]"
 				to_chat(T, "<span class='notice'>Your soul has been captured by the soulstone. Its arcane energies are reknitting your ethereal form.</span>")
@@ -183,30 +186,30 @@
 
 		if("CONSTRUCT")
 			var/obj/structure/constructshell/T = target
-			var/mob/living/simple_animal/shade/A = locate() in src
-			if(A)
+			if(shade)
 				var/construct_class = alert(user, "Please choose which type of construct you wish to create.",,"Juggernaut","Wraith","Artificer")
 				if(!T || !T.loc)
 					return
 				switch(construct_class)
 					if("Juggernaut")
-						makeNewConstruct(/mob/living/simple_animal/hostile/construct/armored, A, user, 0, T.loc)
+						makeNewConstruct(/mob/living/simple_animal/hostile/construct/armored, shade, user, 0, T.loc)
 
 					if("Wraith")
-						makeNewConstruct(/mob/living/simple_animal/hostile/construct/wraith, A, user, 0, T.loc)
+						makeNewConstruct(/mob/living/simple_animal/hostile/construct/wraith, shade, user, 0, T.loc)
 
 					if("Artificer")
 						if(iscultist(user) || iswizard(user))
-							makeNewConstruct(/mob/living/simple_animal/hostile/construct/builder, A, user, 0, T.loc)
+							makeNewConstruct(/mob/living/simple_animal/hostile/construct/builder, shade, user, 0, T.loc)
 
 						else
-							makeNewConstruct(/mob/living/simple_animal/hostile/construct/builder/noncult, A, user, 0, T.loc)
+							makeNewConstruct(/mob/living/simple_animal/hostile/construct/builder/noncult, shade, user, 0, T.loc)
 				for(var/datum/mind/B in SSticker.mode.cult)
-					if(B == A.mind)
-						SSticker.mode.cult -= A.mind
-						SSticker.mode.update_cult_icons_removed(A.mind)
+					if(B == shade.mind)
+						SSticker.mode.cult -= shade.mind
+						SSticker.mode.update_cult_icons_removed(shade.mind)
 				qdel(T)
 				qdel(src)
+				shade = null
 			else
 				to_chat(user, "<span class='userdanger'>Creation failed!</span>: The soul stone is empty! Go kill someone!")
 
@@ -219,6 +222,7 @@
 		var/datum/action/innate/seek_master/SM = new()
 		SM.Grant(newstruct)
 	target.transfer_ckey(newstruct)
+	shade = null
 	var/obj/screen/alert/bloodsense/BS
 	if(newstruct.mind && ((stoner && iscultist(stoner)) || cultoverride) && SSticker && SSticker.mode)
 		SSticker.mode.add_cultist(newstruct.mind, 0)
@@ -244,6 +248,7 @@
 	S.mobility_flags = NONE				//Can't move out of the soul stone
 	S.name = "Shade of [T.real_name]"
 	S.real_name = "Shade of [T.real_name]"
+	shade = S
 	T.transfer_ckey(S)
 	S.language_holder = U.language_holder.copy(S)
 	if(U)

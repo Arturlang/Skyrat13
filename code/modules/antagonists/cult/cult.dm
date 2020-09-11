@@ -17,6 +17,7 @@
 	var/neutered = FALSE			//can not use round ending, gibbing, converting, or similar things with unmatched round impact
 	var/ignore_eligibility_checks = FALSE
 	var/ignore_holy_water = FALSE
+	var/second_chance = TRUE //A cultists second chance to be revived into a shade by an altar.
 
 /datum/antagonist/cult/neutered
 	neutered = TRUE

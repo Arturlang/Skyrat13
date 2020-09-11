@@ -135,7 +135,7 @@
 		return ..()
 	if(iscultist(user))
 		if(ishuman(target) && target.resting)
-			var/obj/structure/cult/altar/altar = locate() in target.loc
+			var/obj/structure/destructible/cult/altar = locate() in target.loc
 			if(altar)
 				altar.attackby(src,user)
 				return
@@ -304,7 +304,7 @@
 			user.UpdateDamageIcon()
 		return
 	if(ishuman(target) && target.resting)
-		var/obj/structure/cult/altar/altar = locate() in target.loc
+		var/obj/structure/destructible/cult/altar = locate() in target.loc
 		if (altar)
 			altar.attackby(src,user)
 			return
@@ -480,7 +480,7 @@
 		S.item_state = "shard-soulstone2"
 	playsound(S, 'sound/effects/hit_on_shattered_glass.ogg', 70, TRUE)
 	qdel(src)
-
+*/
 /obj/item/melee/cultblade/ghost
 	name = "eldritch sword"
 	force = 19 //can't break normal airlocks
@@ -503,7 +503,7 @@
 			user.emote("scream")
 			user.apply_damage(30, BRUTE, pick(BODY_ZONE_L_ARM, BODY_ZONE_R_ARM))
 			user.dropItemToGround(src)
-*/
+
 /obj/item/twohanded/required/cult_bastard
 	name = "bloody bastard sword"
 	desc = "An enormous sword used by Nar'Sien cultists to rapidly harvest the souls of non-believers."
