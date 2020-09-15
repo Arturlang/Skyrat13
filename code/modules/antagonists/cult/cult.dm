@@ -18,6 +18,7 @@
 	var/ignore_eligibility_checks = FALSE
 	var/ignore_holy_water = FALSE
 	var/second_chance = TRUE //A cultists second chance to be revived into a shade by an altar.
+	var/list/conversion = list() //How we were converted
 
 /datum/antagonist/cult/neutered
 	neutered = TRUE
@@ -27,6 +28,13 @@
 	ignore_holy_water = TRUE
 	show_in_roundend = FALSE
 	make_team = FALSE
+
+/proc/log_conversion_type(mob/living/convertee, mob/living/converter)
+	var/datum/antagonist/cult/cult = convertee.mind.has_antag_datum(/datum/antagonist/cult, TRUE)
+	if(!cult)
+		CRASH("log_conversion_type tried to log conversion type on [convertee] which is not a cultist.")
+	cult.conversion["converted"] = converter
+
 
 /datum/antagonist/cult/get_team()
 	return cult_team

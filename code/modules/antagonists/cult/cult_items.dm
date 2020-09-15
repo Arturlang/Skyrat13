@@ -75,7 +75,7 @@
 		return
 	..()
 
-/obj/item/melee/cultblade/proc/punish_user(target, victim)
+/obj/item/melee/cultblade/proc/punish_user(mob/living/target, mob/living/victim)
 	var/pushed_away_from = src
 	target.DefaultCombatKnockdown(100)
 	target.dropItemToGround(src, TRUE)

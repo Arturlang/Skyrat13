@@ -305,7 +305,7 @@
 #define ALTARTASK_GEM	1
 #define ALTARTASK_SACRIFICE	2
 
-/obj/structure/destructible/cult
+/obj/structure/destructible/cult/altar
 	name = "altar"
 	desc = "A bloodstained altar dedicated to Nar-Sie."
 	icon_state = "altar"
@@ -318,13 +318,15 @@
 	var/mob/living/buckled_victim //Pointer for the single buckled victim, if there is one
 	var/altar_task = ALTARTASK_NONE
 	var/gem_delay = 300
-
+	var/list/contributors = list()//list of cultists currently participating in the ritual
+	var/datum/progressbar/progbar
+/*
 	var/list/watching_mobs = list()
 	var/list/watcher_maps = list()
-	//var/datum/station_holomap/cult/holomap_datum
+	var/datum/station_holomap/cult/holomap_datum
+*/
 
-
-/obj/structure/destructible/cult/New()
+/obj/structure/destructible/cult/altar/altar/New()
 	..()
 	flick("[icon_state]-spawn", src)
 	//var/image/I = image(icon, "altar_overlay")
@@ -346,8 +348,8 @@
 	holomap_datum.initialize_holomap(get_turf(src), cursor_icon = "altar-here")
 */
 
-/obj/structure/destructible/cult/Destroy()
-	stopWatching()
+/obj/structure/destructible/cult/altar/Destroy()
+	//stopWatching()
 	if(blade)
 		if(loc)
 			blade.forceMove(loc)
@@ -358,7 +360,7 @@
 	//holomap_markers -= HOLOMAP_MARKER_CULT_ALTAR+"_\ref[src]"
 	..()
 
-/obj/structure/destructible/cult/attackby(obj/item/I, mob/user)
+/obj/structure/destructible/cult/altar/attackby(obj/item/I, mob/user)
 	if(altar_task)
 		return ..()
 	if(I.type == /obj/item/melee/cultblade)
@@ -390,8 +392,8 @@
 					if(O?.mind && O.mind.has_antag_datum(/datum/antagonist/cult))
 						var/datum/antagonist/cult/cultist = O.mind.has_antag_datum(/datum/antagonist/cult)
 						if(cultist.second_chance) //Would use notify_ghosts here if we could manually edit the notify range.
-							to_chat(O, "[icon2base64html(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, 
-							 opening a small crack in the veil that allows you to become the blade's resident shade.
+							to_chat(O, "[icon2base64html(logo_icon)]<span class='recruit'>\The [user] has planted a Soul Blade on an altar, \
+							 opening a small crack in the veil that allows you to become the blade's resident shade. \
 							 s (<a href='?src=\ref[src];signup=\ref[O]'>Possess now!</a>)</span>[icon2base64html(logo_icon)]")
 		return TRUE
 	if(user.pulling && ismob(user.pulling))
@@ -411,14 +413,14 @@
 		return TRUE
 	..()
 
-/obj/structure/destructible/cult/buckle_mob(mob/living/M, force, check_loc)
+/obj/structure/destructible/cult/altar/buckle_mob(mob/living/M, force, check_loc)
 	. = ..()
 	if(buckled_mobs.len < 2)
 		buckled_victim = M //All we do here is register the pointer of the victim we buckle,
 						   // so we dont need to search for them in the contents. There shouldnt ever be more than one buckled victim.
 	
 	
-/obj/structure/destructible/cult/update_icon()
+/obj/structure/destructible/cult/altar/update_icon()
 	icon_state = "altar"
 	overlays.len = 0
 	if(blade)
@@ -442,16 +444,16 @@
 		overlays.Add("altar_damage1")
 
 //We want people on top of the altar to appear slightly higher
-/obj/structure/destructible/cult/Crossed(atom/movable/mover)
+/obj/structure/destructible/cult/altar/Crossed(atom/movable/mover)
 	if(iscarbon(mover))
 		mover.pixel_y += 7 * PIXEL_MULTIPLIER
 
-/obj/structure/destructible/cult/Uncrossed(atom/movable/mover)
+/obj/structure/destructible/cult/altar/Uncrossed(atom/movable/mover)
 	if(iscarbon(mover))
 		mover.pixel_y -= 7 * PIXEL_MULTIPLIER
 
 //They're basically the height of regular tables
-/obj/structure/destructible/cult/CanPass(atom/movable/mover, turf/target)
+/obj/structure/destructible/cult/altar/CanPass(atom/movable/mover, turf/target)
 	if(istype(mover) && (mover.pass_flags & PASSTABLE))
 		return TRUE
 	if(mover.throwing)
@@ -460,18 +462,20 @@
 		return TRUE
 	else
 		return !density
-/obj/structure/destructible/cult/CanAStarPass(ID, dir, caller)
+
+/obj/structure/destructible/cult/altar/CanAStarPass(ID, dir, caller)
 	. = !density
 	if(ismovable(caller))
 		var/atom/movable/mover = caller
 		. = . || (mover.pass_flags & PASSTABLE)
 
-/obj/structure/destructible/cult/proc/checkPosition()
+/*
+/obj/structure/destructible/cult/altar/proc/checkPosition()
 	for(var/mob/M in watching_mobs)
 		if(get_dist(src,M) > 1)
 			stopWatching(M)
 
-/obj/structure/destructible/cult/proc/stopWatching(mob/user)
+/obj/structure/destructible/cult/altar/proc/stopWatching(mob/user)
 	if(!user)
 		for(var/mob/M in watching_mobs)
 			if(M.client)
@@ -492,8 +496,9 @@
 			animate(watcher_maps["\ref[user]"], alpha = 0, time = 5, easing = LINEAR_EASING)
 
 			watching_mobs -= user
+*/
 
-/obj/structure/destructible/cult/conceal()
+/obj/structure/destructible/cult/altar/conceal()
 	if(blade || altar_task)
 		return
 	anim(location = loc,target = loc,a_icon = icon, flick_anim = "[icon_state]-conceal")
@@ -501,13 +506,13 @@
 		Uncrossed(C)
 	..()
 
-/obj/structure/destructible/cult/reveal()
+/obj/structure/destructible/cult/altar/reveal()
 	flick("[icon_state]-spawn", src)
 	..()
 	for(var/mob/living/carbon/C in loc)
 		Crossed(C)
 
-/obj/structure/destructible/cult/tome/ui_interact(mob/user)
+/obj/structure/destructible/cult/altar/ui_interact(mob/user)
 	. = ..()
 	if(iscultist(user))
 		cultist_act(user)
@@ -516,20 +521,18 @@
 	else
 		noncultist_act(user)
 
-/obj/structure/destructible/cult/proc/servant_of_ratvar_act(mob/living/user)
+/obj/structure/destructible/cult/altar/proc/servant_of_ratvar_act(mob/living/user)
 	var/send_dir = get_dir(src, user)
 	var/turf/T = get_ranged_target_turf(user, send_dir, 5)
 	user.throw_at(T, send_dir, 5) //Yeet the heretic
 	user.DefaultCombatKnockdown(user, 10)
 	to_chat(user, )
 
-/obj/structure/destructible/cult/proc/cultist_act(mob/user, menu = "default")
-	.=..()
-	if(!.)
-		return
-	if(user in watching_mobs)
+/obj/structure/destructible/cult/altar/proc/cultist_act(mob/user, menu = "default")
+	/*if(user in watching_mobs)
 		stopWatching(user)
 		return
+	*/
 	if(altar_task)
 		if(altar_task == ALTARTASK_SACRIFICE)
 			if(user in contributors)
@@ -540,8 +543,6 @@
 			else
 				user.say("Barhah hra zar'garis!","C")
 			contributors.Add(user)
-			if(user.client)
-				user.client.images |= progbar
 		return
 	if(blade in src.contents)
 		var/choices = list(
@@ -570,19 +571,14 @@
 							update_icon()
 			if("Sacrifice")
 				var/datum/antagonist/cult/cult = user.mind.has_antag_datum(/datum/antagonist/cult, TRUE)
-				var/datum/team/cult/cult_team = cult.cult_team
-				if(cult && cult_team)
-					var/datum/objective/bloodcult_sacrifice/O = locate() in cult.objective_holder.objectives
+				var/datum/team/cult/team = cult.cult_team
+				if(cult && team)
 					if(buckled_victim)
-						if(cult.cult_team.is_sacrifice_target(buckled_victim.mind)))
+						if(cult.team.is_sacrifice_target(buckled_victim.mind))
 							altar_task = ALTARTASK_SACRIFICE
-							timeleft = 30
-							timetotal = timeleft
 							update_icon()
 							contributors.Add(user)
-							update_progbar()
-							if(user.client)
-								user.client.images |= progbar
+							progbar = new(contributors, 30, src) //TEST IF IT WORKS FOR LIST'S
 							var/image/I = image('icons/obj/cult.dmi',"build")
 							I.pixel_y = 8
 							src.overlays += I
@@ -591,8 +587,6 @@
 								user.say("Let me show you the dance of my people!","C")
 							else
 								user.say("Barhah hra zar'garis!","C")
-							if(user.client)
-								user.client.images |= progbar
 							safe_space()
 							for(var/mob/M in range(src, 40))
 								if(M.z == z && M.client)
@@ -627,11 +621,12 @@
 			return
 		switch(task)
 			if("Consult Roster")
-				var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
-				if(!cult)
+				var/datum/antagonist/cult/cult = user.mind.has_antag_datum(/datum/antagonist/cult, TRUE)
+				var/datum/team/cult/team = cult.cult_team
+				if(!team)
 					return
 				var/dat = {"<body style="color:#FFFFFF" bgcolor="#110000"><ul>"}
-				for(var/datum/antagonist/cult/C in cult.members)
+				for(C in cult.members)
 					var/datum/mind/M = C.antag
 					var/conversion = ""
 					if(C.conversion.len > 0)
@@ -661,7 +656,7 @@
 				dat += {"</ul></body>"}
 				user << browse("<TITLE>Cult Roster</TITLE>[dat]", "window=cultroster;size=500x300")
 				onclose(user, "cultroster")
-			if ("Look through Veil")
+			/*if ("Look through Veil")
 				if(user.hud_used && user.hud_used.holomap_obj)
 					if(!("\ref[user]" in watcher_maps))
 						var/image/personnal_I = prepare_cult_holomap()
@@ -681,7 +676,7 @@
 					animate(watcher_maps["\ref[user]"], alpha = 255, time = 5, easing = LINEAR_EASING)
 					watching_mobs |= user
 					user.client.images |= watcher_maps["\ref[user]"]
-					user.callOnFace["\ref[src]"] = "checkPosition"
+					user.callOnFace["\ref[src]"] = "checkPosition"*/
 			if("Commune with Nar-Sie")
 				switch(GLOB.veil_thickness)
 					if(CULT_MENDED)
@@ -740,7 +735,7 @@
 					var/obj/item/soulstone/gem/gem = new (loc)
 					gem.pixel_y = 4
 
-/obj/structure/destructible/cult/proc/replace_target(/mob/user)
+/obj/structure/destructible/cult/altar/proc/replace_target(mob/user)
 	var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
 	if(cult)
 		var/datum/objective/bloodcult_sacrifice/O = locate() in cult.objective_holder.objectives
@@ -760,7 +755,7 @@
 						to_chat(M,"<b>There are no elligible targets aboard the station, how did you guys even manage that one?</b>")//if there's literally no humans aboard the station
 						to_chat(M,"<b>There needs to be humans aboard the station, cultist or not, for a target to be selected.</b>")
 
-/obj/structure/destructible/cult/noncultist_act(mob/user)//Non-cultists can still remove blades planted on altars.
+/obj/structure/destructible/cult/altar/noncultist_act(mob/user)//Non-cultists can still remove blades planted on altars.
 	if(is_locking(lock_type))
 		var/mob/M = get_locked(lock_type)[1]
 		if(M != user)
@@ -788,7 +783,7 @@
 
 
 
-/obj/structure/destructible/cult/Topic(href, href_list)
+/obj/structure/destructible/cult/altar/Topic(href, href_list)
 	if(href_list["signup"])
 		var/mob/M = usr
 		if(!isobserver(M) || !iscultist(M))
@@ -836,7 +831,7 @@
 		cult_risk()//risk of exposing the cult early if too many soul blades created
 
 
-/obj/structure/destructible/cult/proc/dance_start()//This is executed at the end of the sacrifice ritual
+/obj/structure/destructible/cult/altar/proc/dance_start()//This is executed at the end of the sacrifice ritual
 	//var/datum/faction/bloodcult/cult = find_active_faction_by_type(/datum/faction/bloodcult)
 	//if (cult)
 	//	cult.change_cooldown = max(cult.change_cooldown,60 SECONDS)
@@ -889,7 +884,7 @@
 #undef ALTARTASK_GEM
 #undef ALTARTASK_SACRIFICE
 
-/obj/structure/destructible/cult/proc/safe_space()
+/obj/structure/destructible/cult/altar/proc/safe_space()
 	for(var/turf/T in range(5, src))
 		var/dist = cheap_pythag(T.x - src.x, T.y - src.y)
 		if(dist <= 2.5)
