@@ -104,7 +104,7 @@
 	for(var/obj/structure/lattice/L in src)
 		L.ratvar_act()
 
-/turf/closed/wall/clockwork/narsie_act()
+/turf/closed/wall/clockwork/narsie_act(force, ignore_mobs, probability = 20)
 	..()
 	if(istype(src, /turf/closed/wall/clockwork)) //if we haven't changed type
 		var/previouscolor = color

@@ -222,7 +222,6 @@
 		var/datum/action/innate/seek_master/SM = new()
 		SM.Grant(newstruct)
 	target.transfer_ckey(newstruct)
-	shade = null
 	var/obj/screen/alert/bloodsense/BS
 	if(newstruct.mind && ((stoner && iscultist(stoner)) || cultoverride) && SSticker && SSticker.mode)
 		SSticker.mode.add_cultist(newstruct.mind, 0)
@@ -237,12 +236,13 @@
 	newstruct.cancel_camera()
 
 
-/obj/item/soulstone/proc/init_shade(mob/living/carbon/human/T, mob/U, vic = 0)
-	new /obj/effect/decal/remains/human(T.loc) //Spawns a skeleton
-	T.stop_sound_channel(CHANNEL_HEARTBEAT)
-	T.invisibility = INVISIBILITY_ABSTRACT
-	T.dust_animation()
-	QDEL_IN(T, 5)
+/obj/item/soulstone/proc/init_shade(mob/living/T, mob/U, vic = 0)
+	if(ishuman(T) && iscyborg(T))
+		new /obj/effect/decal/remains/human(T.loc) //Spawns a skeleton
+		T.stop_sound_channel(CHANNEL_HEARTBEAT)
+		T.invisibility = INVISIBILITY_ABSTRACT
+		T.dust_animation()
+		QDEL_IN(T, 5)
 	var/mob/living/simple_animal/shade/S = new /mob/living/simple_animal/shade(src)
 	S.status_flags |= GODMODE			//So they won't die inside the stone somehow
 	S.mobility_flags = NONE				//Can't move out of the soul stone

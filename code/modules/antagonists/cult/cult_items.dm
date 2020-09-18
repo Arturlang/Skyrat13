@@ -88,13 +88,13 @@
 	if(iscultist(user))
 		punish_user(user)
 		return
-	if(istype(/obj/item/soulstone) && !soulstone)
+	if(soulstone)
+		to_chat(user, "<span class='notice'There is no room for two soulstones in the sword.</span>")
+		return
+	if(I == /obj/item/soulstone)
 		to_chat(user, "<span class='notice'You insert the soul shard into the pommel of the sword.</span>")
 		soulstone = I
 		I.forceMove(src)
-		return
-	if(soulstone)
-		to_chat(user, "<span class='notice'There is no room for two soulstones in the sword.</span>")
 		return
 	. = ..()
 

@@ -224,7 +224,7 @@
 		return
 	return ..()
 
-/turf/open/floor/clockwork/narsie_act()
+/turf/open/floor/clockwork/narsie_act(force, ignore_mobs, probability = 20)
 	..()
 	if(istype(src, /turf/open/floor/clockwork)) //if we haven't changed type
 		var/previouscolor = color

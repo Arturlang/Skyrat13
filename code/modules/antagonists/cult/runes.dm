@@ -226,7 +226,7 @@ structure_check() searches for nearby cultist structures required for the invoca
 			do_convert(L, invokers)
 	else
 		for(var/M in invokers)
-			to_chat(M, "<span class='warning'>You cant convert this one, you need a sacrifical altar.</span>")
+			to_chat(M, "<span class='warning'>You cant convert this one, you need to bring them to the cult's altar.</span>")
 		invocation = "Barhah hra zar'garis."
 		..()
 		
@@ -258,7 +258,9 @@ structure_check() searches for nearby cultist structures required for the invoca
 	SSticker.mode.add_cultist(convertee.mind, 1)
 	new /obj/item/melee/cultblade/dagger(get_turf(src))
 	convertee.mind.special_role = ROLE_CULTIST
-	convertee.conversion["converted"] = activator
+	var/mob/living/first_invoker = invokers[1]
+	var/datum/antagonist/cult/cultist = convertee.mind.has_antag_datum(/datum/antagonist/cult, TRUE)
+	cultist.conversion["converted"] = first_invoker
 	to_chat(convertee, "<span class='cult italic'><b>Your blood pulses. Your head throbs. The world goes red. All at once you are aware of a horrible, horrible, truth. The veil of reality has been ripped away \
 	and something evil takes root.</b></span>")
 	to_chat(convertee, "<span class='cult italic'><b>Assist your new compatriots in their dark dealings. Your goal is theirs, and theirs is yours. You serve the Geometer above all else. Bring it back.\
