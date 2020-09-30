@@ -291,6 +291,8 @@
 				++cultplayers
 			else
 				++alive
+	if(!alive)//Divison by zero check.
+		return
 	var/ratio = cultplayers/alive
 	if(ratio > CULT_RISEN && !cult_risen)
 		for(var/datum/mind/B in members)

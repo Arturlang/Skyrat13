@@ -82,7 +82,7 @@ Runes can either be invoked by one's self or with many different cultists. Each 
 		fail_invoke()
 
 /obj/effect/rune/attack_animal(mob/living/simple_animal/M)
-	if(istype(M, /mob/living/simple_animal/shade) || istype(M, /mob/living/simple_animal/hostile/construct))
+	if(istype(M, /mob/living/simple_animal/hostile/construct/shade) || istype(M, /mob/living/simple_animal/hostile/construct))
 		if(construct_invoke || !iscultist(M)) //if you're not a cult construct we want the normal fail message
 			attack_hand(M)
 		else
@@ -191,7 +191,7 @@ structure_check() searches for nearby cultist structures required for the invoca
 /obj/effect/rune/convert/do_invoke_glow()
 	return
 
-/obj/effect/rune/convert/invoke(var/list/invokers)
+/obj/effect/rune/convert/invoke(list/invokers)
 	if(rune_in_use)
 		return
 	var/list/myriad_targets = list()
@@ -264,7 +264,7 @@ structure_check() searches for nearby cultist structures required for the invoca
 		H.uncuff()
 		H.stuttering = 0
 		H.cultslurring = 0
-	return 1
+	return TRUE
 
 /obj/effect/rune/convert/proc/do_sacrifice(mob/living/sacrificial, list/invokers)
 	var/mob/living/first_invoker = invokers[1]
@@ -273,8 +273,6 @@ structure_check() searches for nearby cultist structures required for the invoca
 	var/datum/antagonist/cult/C = first_invoker.mind.has_antag_datum(/datum/antagonist/cult,TRUE)
 	if(!C)
 		return
-
-
 	var/big_sac = FALSE
 	if((((ishuman(sacrificial) || iscyborg(sacrificial)) && sacrificial.stat != DEAD) || C.cult_team.is_sacrifice_target(sacrificial.mind)) && invokers.len < 3)
 		for(var/M in invokers)
@@ -309,11 +307,14 @@ structure_check() searches for nearby cultist structures required for the invoca
 
 	if(sacrificial)
 		if(iscyborg(sacrificial))
-			playsound(sacrificial, 'sound/magic/disable_tech.ogg', 100, 1)
-			sacrificial.dust() //To prevent the MMI from remaining
+			var/mob/living/silicon/robot/bot = sacrificial
+			playsound(sacrificial, 'sound/magic/disable_tech.ogg', 100, TRUE)
+			bot.deconstruct()
+
 		else
-			playsound(sacrificial, 'sound/magic/disintegrate.ogg', 100, 1)
-			sacrificial.gib()
+			playsound(sacrificial, 'sound/magic/disintegrate.ogg', 100, TRUE)
+			var/mob/living/carbon/human/H = sacrificial
+			H.spew_organ(2, 6)
 	return TRUE
 
 /obj/effect/rune/empower

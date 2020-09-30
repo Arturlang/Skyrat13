@@ -1,4 +1,4 @@
-/mob/living/simple_animal/shade
+/mob/living/simple_animal/hostile/construct/shade
 	name = "Shade"
 	real_name = "Shade"
 	desc = "A bound spirit."
@@ -37,16 +37,16 @@
 	initial_language_holder = /datum/language_holder/construct
 	blood_volume = 0
 
-/mob/living/simple_animal/shade/death()
+/mob/living/simple_animal/hostile/construct/shade/death()
 	deathmessage = "lets out a contented sigh as [p_their()] form unwinds."
 	..()
 
-/mob/living/simple_animal/shade/canSuicide()
+/mob/living/simple_animal/hostile/construct/shade/canSuicide()
 	if(istype(loc, /obj/item/soulstone)) //do not suicide inside the soulstone
-		return 0
+		return FALSE
 	return ..()
 
-/mob/living/simple_animal/shade/attack_animal(mob/living/simple_animal/M)
+/mob/living/simple_animal/hostile/construct/shade/attack_animal(mob/living/simple_animal/M)
 	if(isconstruct(M))
 		var/mob/living/simple_animal/hostile/construct/C = M
 		if(!C.can_repair_constructs)
@@ -61,7 +61,7 @@
 	else if(src != M)
 		return ..()
 
-/mob/living/simple_animal/shade/attackby(obj/item/O, mob/user, params)  //Marker -Agouri
+/mob/living/simple_animal/hostile/construct/shade/attackby(obj/item/O, mob/user, params)  //Marker -Agouri
 	if(istype(O, /obj/item/soulstone))
 		var/obj/item/soulstone/SS = O
 		SS.transfer_soul("SHADE", src, user)
